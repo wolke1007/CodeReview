@@ -3,9 +3,9 @@ from packages.pages import *
 
 class main():
     def run(self):
-        ServicePage().check_all_rules()
-        ControllerPage().check_all_rules()
-        ServiceImplPage().check_all_rules()
+        ServicePage(file_path="abc.txt").check_all_rules()
+        # ControllerPage().check_all_rules()
+        # ServiceImplPage().check_all_rules()
 
 
 if __name__ == "__main__":
