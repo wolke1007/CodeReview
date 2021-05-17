@@ -3,7 +3,7 @@ from packages.pages import *
 
 class main():
     def run(self):
-        ServicePage(file_path="abc.txt").check_all_rules()
+        ControllerPage(file_path="abc.txt").check_all_rules()
         # ControllerPage().check_all_rules()
         # ServiceImplPage().check_all_rules()
 

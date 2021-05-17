@@ -23,6 +23,12 @@ class ServicePage(Page):
         super().__init__(file_path= file_path)
         self.set_rules([JavaDocRule(self)])
 
+
+class ControllerPage(Page):
+    def __init__(self, file_path: str):
+        super().__init__(file_path= file_path)
+        self.set_rules([CommentRule(self)])
+
 # class ServicePage(Page):
 #     def __init__(self):
 #         super().__init__([CommentRule(),

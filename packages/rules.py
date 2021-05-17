@@ -17,7 +17,7 @@ class Rule():
     def do_rule_check(self):
         self.__check_with_assert_rule()
         # collect all error messages, then log into file
-        self.log_error_line()
+        self._log_error_line_()
 
     def set_assert_rule(self, assert_rule: Callable):
         self.assert_logics.append(assert_rule)
@@ -26,10 +26,17 @@ class Rule():
         for assert_logic in self.assert_logics:
             assert_logic()
 
-    def log_error_line(self):
+    def _log_error_line_(self):
         with open(self.log_path, 'a') as file:
             file.writelines(self.error_logs)
 
+    def log_error_line(self, count: int, function_name: str):
+        self.error_logs.append(
+            self.log_template.format(
+                self.page.file_path,
+                count + 1,
+                function_name
+            ))
 
 # 註解
 class JavaDocRule(Rule):
@@ -55,15 +62,7 @@ class JavaDocRule(Rule):
 
     def __init__(self, page):
         super().__init__(page)
-        self.set_assert_rule(self.java_doc_should_exist)
-
-    def _log_error_line_(self, count: int, function_name: str):
-        self.error_logs.append(
-            self.log_template.format(
-                self.page.file_path,
-                count + 1,
-                function_name
-            ))
+        self.set_assert_rule(self.java_doc_should_exist) 
 
     def java_doc_should_exist(self):
         '''
@@ -74,24 +73,43 @@ class JavaDocRule(Rule):
             if "*/" in line:
                 end_of_comment = True
             if ";" in line and not end_of_comment:
-                self._log_error_line_(count, self.java_doc_should_exist.__name__)
+                self.log_error_line(count, self.java_doc_should_exist.__name__)
                 end_of_comment = False
                 continue
             if ";" in line and end_of_comment:
                 end_of_comment = False
 
 
-# class CommentRule(Rule):
-#     """
-#     - 方法內的註解分為2種
-#         - 說明註解: 用來說明使用
-#         - 邏輯註解: 程式邏輯
-#     - 說明註解留下
-#     - 邏輯註解移除
-#     """
+class CommentRule(Rule):
+    """
+    - 方法內的註解分為2種
+        - 說明註解: 用來說明使用
+        - 邏輯註解: 程式邏輯
+    - 說明註解留下
+    - 邏輯註解移除
+    """
+    def __init__(self, page):   
+        super().__init__(page)
+        self.set_assert_rule(self.code_comment_should_not_exist)
 
-#     def check(self):
-#         print(self.type)
+    def code_comment_should_not_exist(self):
+        '''
+        邏輯註解不該留下
+        '''
+        for count, line in enumerate(self.page.file_lines, start=0):
+            if "//" not in line:
+                continue
+            chinese_in_line = False
+            comment_start = False
+            for ch in line: 
+                if ch == "/":
+                    comment_start = True
+                if not comment_start:
+                    continue
+                if u'\u4e00' <= ch <= u'\u9fff': 
+                    chinese_in_line = True  # 有註解，且有中文，判斷為說明邏輯
+            if not chinese_in_line:
+                self.log_error_line(count, self.code_comment_should_not_exist.__name__)
 
 # # 風格
 
