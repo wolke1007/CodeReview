@@ -2,19 +2,26 @@ from .rules import *
 
 
 class Page():
-    def __init__(self, rules: list):
+    def __init__(self, file_path: str):
         self.type = type(self).__name__
+        self.file_path = file_path
         print(self.type)  # debug
+        with open(self.file_path, 'r') as f:
+            self.file_lines = f.readlines()
+        self.rules = []
+
+    def set_rules(self, rules: list):
         self.rules = rules
 
     def check_all_rules(self):
         for rule in self.rules:
-            rule.run()
+            rule.do_rule_check()
 
 
 class ServicePage(Page):
     def __init__(self, file_path: str):
-        super().__init__([JavaDocRule(file_path= file_path)])
+        super().__init__(file_path= file_path)
+        self.set_rules([JavaDocRule(self)])
 
 # class ServicePage(Page):
 #     def __init__(self):

@@ -1,35 +1,31 @@
 from typing import Callable
+from enum import Enum
+
 
 class Rule():
-    def __init__(self, file_path: str, assert_logic: Callable[[str], bool]):
+    def __init__(self, page):
         self.type = type(self).__name__
         print(self.type)  # debug
-        self.assert_logic = assert_logic
-        self.file = file_path
-        self.error_logs = ["=== {name} === \n".format(name=file_path)]
+        self.assert_logics = []
+        self.page = page
+        self.error_logs = ["=== {name} === \n".format(
+            name=self.page.file_path)]
         self.log_path = "./log.txt"
+        self.log_template = "file: {} line:, {} violet rule: \"{}\"\n"
 
-    def run(self):
+    def do_rule_check(self):
         self.__check_with_assert_rule()
         # collect all error messages, then log into file
-        self.__log_error_line()
+        self.log_error_line()
+
+    def set_assert_rule(self, assert_rule: Callable):
+        self.assert_logics.append(assert_rule)
 
     def __check_with_assert_rule(self):
-        with open(self.file, 'r') as f:
-            lines = f.readlines()
-        line_count = 1
-        for line in lines:
-            exam_pass = self.assert_logic(line)
-            if (not exam_pass):
-                error_msg = "Fail because violate rule:{rule_name}, line: {position} \n".format(
-                    rule_name=self.type,
-                    position=str(line_count)
-                )
-                print(error_msg) # debug
-                self.error_logs.append(error_msg)
-            line_count += 1
+        for assert_logic in self.assert_logics:
+            assert_logic()
 
-    def __log_error_line(self):
+    def log_error_line(self):
         with open(self.log_path, 'a') as file:
             file.writelines(self.error_logs)
 
@@ -42,7 +38,7 @@ class JavaDocRule(Rule):
     - 註解格式是否正確
     - 註解參數是否正確
     ex.
-    /**
+        /**
          * 查詢 A02_DEADLINE_AS
          * @param deaasKind
          * @param deaasId
@@ -55,13 +51,23 @@ class JavaDocRule(Rule):
         .
     }
     """
-    def __init__(self, file_path):
-        super().__init__(file_path, self.assert_logic)
 
-    def assert_logic(self, line):
-        if ("a" in line): # debug
-            return False
-        return True
+    def __init__(self, page):
+        super().__init__(page)
+        self.set_assert_rule(self.assert_logic1)
+
+    def assert_logic1(self):
+        '''
+        檢查 JavaDoc 註解是否有寫
+        '''
+        for count, line in enumerate(self.page.file_lines, start=0):
+            if "a" in line:
+                self.error_logs.append(
+                    self.log_template.format(
+                        self.page.file_path,
+                        count + 1,
+                        self.assert_logic1.__name__
+                    ))
 
 
 # class CommentRule(Rule):
