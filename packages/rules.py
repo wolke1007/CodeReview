@@ -8,10 +8,11 @@ class Rule():
         print(self.type)  # debug
         self.assert_logics = []
         self.page = page
+        # 需要印出來的 log 全部 append 在這個 list 裡面並在 do_rule_check 最後一次一起印
         self.error_logs = ["=== {name} === \n".format(
             name=self.page.file_path)]
         self.log_path = "./log.txt"
-        self.log_template = "file: {} line:, {} violet rule: \"{}\"\n"
+        self.log_template = "file: {} line:, {} violate rule: \"{}\"\n"
 
     def do_rule_check(self):
         self.__check_with_assert_rule()
@@ -54,20 +55,30 @@ class JavaDocRule(Rule):
 
     def __init__(self, page):
         super().__init__(page)
-        self.set_assert_rule(self.assert_logic1)
+        self.set_assert_rule(self.java_doc_should_exist)
 
-    def assert_logic1(self):
+    def _log_error_line_(self, count: int, function_name: str):
+        self.error_logs.append(
+            self.log_template.format(
+                self.page.file_path,
+                count + 1,
+                function_name
+            ))
+
+    def java_doc_should_exist(self):
         '''
         檢查 JavaDoc 註解是否有寫
         '''
+        end_of_comment = False
         for count, line in enumerate(self.page.file_lines, start=0):
-            if "a" in line:
-                self.error_logs.append(
-                    self.log_template.format(
-                        self.page.file_path,
-                        count + 1,
-                        self.assert_logic1.__name__
-                    ))
+            if "*/" in line:
+                end_of_comment = True
+            if ";" in line and not end_of_comment:
+                self._log_error_line_(count, self.java_doc_should_exist.__name__)
+                end_of_comment = False
+                continue
+            if ";" in line and end_of_comment:
+                end_of_comment = False
 
 
 # class CommentRule(Rule):
