@@ -25,9 +25,11 @@ class ServicePage(Page):
 
 
 class ControllerPage(Page):
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str, controller_name: str):
         super().__init__(file_path= file_path)
+        self.controller_name = controller_name
         self.set_rules([CommentRule(self)])
+        
 
 # class ServicePage(Page):
 #     def __init__(self):
