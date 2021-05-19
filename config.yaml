@@ -1,0 +1,3 @@
+project_root_path : /Users/cloud.chen/code/taifex-fdms-cms
+service_directory_path : /src/main/java/com/mitake/infra/repository/app/service
+controller_directory_path : /src/main/java/com/mitake/controller
