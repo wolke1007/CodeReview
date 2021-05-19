@@ -140,10 +140,10 @@ class IfElseRule(Rule):
         搜尋 if 關鍵字，檢查是否同時有 { 跟在後面
         '''
         for count, line in enumerate(self.page.file_lines, start=0):
-            if ("\tif (" in line or 
-                " if (" in line or 
+            if ("\tif (" in line or
+                " if (" in line or
                 "\tif(" in line or
-                " if(" in line) and "{" not in line:
+                    " if(" in line) and "{" not in line:
                 self.log_error_line(
                     count, self.if_statement_should_with_bracket_mark.__name__, line)
 
@@ -202,36 +202,50 @@ class UnderLineRule(Rule):
 # # 程式碼
 
 
-# class RequestMethodRule(Rule):
-#     """
-#     - Controller內的進入點，接受的Get Post 要把關，不要同時接受 Get 及 Post 的，如果有要問開發者否有必要
-#     - 原則上是進度功能首頁會是走Get，其他行為都用Post
+class RequestMethodRule(Rule):
+    """
+    - Controller內的進入點，接受的Get Post 要把關，不要同時接受 Get 及 Post 的，如果有要問開發者否有必要
+    - 原則上是進度功能首頁會是走Get，其他行為都用Post
 
-#     // 推薦的寫法，GET POST 他只能設定一種方式
-#     @GetMapping(value = "/index/doQuery")
-#     或
-#     @PostMapping(value = "/index/doQuery")
-#     public ModelAndView doQuery(HttpServletRequest request, HttpServletResponse response, HttpSession session,
-#             RedirectAttributes redirectAttrs) {
+    // 推薦的寫法，GET POST 他只能設定一種方式
+    @GetMapping(value = "/index/doQuery")
+    或
+    @PostMapping(value = "/index/doQuery")
+    public ModelAndView doQuery(HttpServletRequest request, HttpServletResponse response, HttpSession session,
+            RedirectAttributes redirectAttrs) {
 
-#     // 另外這個寫法可以使用
-#     // 只是不要是GET POST都支援的作法
-#     @RequestMapping(value = "/index/doQuery", method = { RequestMethod.GET, RequestMethod.POST })
-#     public ModelAndView toQuery(HttpServletRequest request, HttpServletResponse response, HttpSession session) {
-#     """
+    // 另外這個寫法可以使用
+    // 只是不要是GET POST都支援的作法
+    @RequestMapping(value = "/index/doQuery", method = { RequestMethod.GET, RequestMethod.POST })
+    public ModelAndView toQuery(HttpServletRequest request, HttpServletResponse response, HttpSession session) {
+    """
 
+    def __init__(self, page):
+        super().__init__(page)
+        self.set_assert_rule(self.should_not_allow_both_get_and_post_method)
 
-    # def __init__(self, page):
-    #     super().__init__(page)
-    #     self.set_assert_rule(self.todo)
-
-    # def todo(self):
-    #     '''
-    #     todo
-    #     '''
-    #     for count, line in enumerate(self.page.file_lines, start=0):
-    #         self.log_error_line(
-    #             count, self.todo.__name__, line)
+    def should_not_allow_both_get_and_post_method(self):
+        '''
+        檢查是否同時有 RequestMethod.GET 與 RequestMethod.POST
+        '''
+        new_method = False
+        request_get = False
+        request_post = False
+        for count, line in enumerate(self.page.file_lines, start=0):
+            if "@RequestMapping(" in line:
+                new_method = True
+            if new_method:
+                if "RequestMethod.GET" in line:
+                    request_get = True
+                if "RequestMethod.POST" in line:
+                    request_post = True
+                if request_get and request_post:
+                    self.log_error_line(
+                        count, self.should_not_allow_both_get_and_post_method.__name__, line)
+                if ")" in line:
+                    new_method = False
+                    request_get = False
+                    request_post = False
 
 
 # class ServiceImplAnnotationRule(Rule):
@@ -244,7 +258,6 @@ class UnderLineRule(Rule):
 #                 return a01arDao.deleteA01ar(userId);
 #         }
 #     """
-
 
     # def __init__(self, page):
     #     super().__init__(page)
@@ -336,7 +349,8 @@ if __name__ == "__main__":
             for rule in self.rules:
                 rule.do_rule_check()
     page = TestPage()
-    IfElseRule(page).do_rule_check()
+    RequestMethodRule(page).do_rule_check()
+    # IfElseRule(page).do_rule_check()
     # GenericTypeRule(page).do_rule_check()
     # MethodNameRule(page).do_rule_check()
     # JavaDocRule(page).do_rule_check()
