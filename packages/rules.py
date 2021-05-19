@@ -3,6 +3,7 @@ from enum import Enum
 import re
 import time
 
+
 class Rule():
     def __init__(self, page):
         self.type = type(self).__name__
@@ -12,7 +13,7 @@ class Rule():
         # 需要印出來的 log 全部 append 在這個 list 裡面並在 do_rule_check 最後一次一起印
         self.error_logs = ["=== {name} {time}=== \n".format(
             name=self.page.file_path,
-            time=time.strftime("%Y-%m-%d %X",time.localtime()))]
+            time=time.strftime("%Y-%m-%d %X", time.localtime()))]
         self.log_path = "./log.txt"
         self.log_template = ("file: {} line: {} violate rule: \"{}\"\n"
                              "code: >>>{}\n")
@@ -43,6 +44,8 @@ class Rule():
             ))
 
 # 註解
+
+
 class JavaDocRule(Rule):
     """
     - JavaDoc註解是否有寫
@@ -66,7 +69,7 @@ class JavaDocRule(Rule):
 
     def __init__(self, page):
         super().__init__(page)
-        self.set_assert_rule(self.java_doc_should_exist) 
+        self.set_assert_rule(self.java_doc_should_exist)
 
     def java_doc_should_exist(self):
         '''
@@ -79,7 +82,8 @@ class JavaDocRule(Rule):
             if "*/" in line:
                 end_of_comment = True
             if ";" in line and not end_of_comment:
-                self.log_error_line(count, self.java_doc_should_exist.__name__, line)
+                self.log_error_line(
+                    count, self.java_doc_should_exist.__name__, line)
                 end_of_comment = False
                 continue
             if ";" in line and end_of_comment:
@@ -94,7 +98,8 @@ class CommentRule(Rule):
     - 說明註解留下
     - 邏輯註解移除
     """
-    def __init__(self, page):   
+
+    def __init__(self, page):
         super().__init__(page)
         self.set_assert_rule(self.code_comment_should_not_exist)
 
@@ -107,26 +112,40 @@ class CommentRule(Rule):
                 continue
             chinese_in_line = False
             comment_start = False
-            for ch in line: 
+            for ch in line:
                 if ch == "/":
                     comment_start = True
                 if not comment_start:
                     continue
-                if u'\u4e00' <= ch <= u'\u9fff': 
+                if u'\u4e00' <= ch <= u'\u9fff':
                     chinese_in_line = True  # 有註解，且有中文，判斷為說明邏輯
             if not chinese_in_line:
-                self.log_error_line(count, self.code_comment_should_not_exist.__name__, line)
+                self.log_error_line(
+                    count, self.code_comment_should_not_exist.__name__, line)
 
 # # 風格
 
 
-# class IfElseRule(Rule):
-#     """
-#     - 不要有單行if, for statment
-#     """
+class IfElseRule(Rule):
+    """
+    - 不要有單行if, for statment
+    """
 
-#     def check(self):
-#         print(self.type)
+    def __init__(self, page):
+        super().__init__(page)
+        self.set_assert_rule(self.if_statement_should_with_bracket_mark)
+
+    def if_statement_should_with_bracket_mark(self):
+        '''
+        搜尋 if 關鍵字，檢查是否同時有 { 跟在後面
+        '''
+        for count, line in enumerate(self.page.file_lines, start=0):
+            if ("\tif (" in line or 
+                " if (" in line or 
+                "\tif(" in line or
+                " if(" in line) and "{" not in line:
+                self.log_error_line(
+                    count, self.if_statement_should_with_bracket_mark.__name__, line)
 
 
 class UnderLineRule(Rule):
@@ -139,10 +158,13 @@ class UnderLineRule(Rule):
     - 收納該功能 jsp 及 js 檔案的資料夾應為 `a01sr08_13`
     """
 
-    def __init__(self, page, *argv):   
+    def __init__(self, page, *argv):
         super().__init__(page)
         self.set_assert_rule(self.controller_name_should_same_as_do_naming)
 
+    # TODO 這個規則有分檢查檔案裡面的字，跟檔名
+    # 可能需要想一下是不是要設計一個檢查檔案(page)外事情的規則
+    # 或是用 path 的方式來進行檢查
     def controller_name_should_same_as_do_naming(self):
         '''
         用 controller 的檔名去尋找是否存在於 phase-1-data.sql 中
@@ -153,9 +175,8 @@ class UnderLineRule(Rule):
                 SQL: a0102_03
             2. 撰寫者沒有更新 update sql 導致搜尋不到
         '''
-        # self.page.file_path = 
+        # self.page.file_path =
         # self.log_error_line(count, self.code_comment_should_not_exist.__name__, line)
-  
 
 
 # class LegacyDirectoryPathRule(Rule):
@@ -166,8 +187,17 @@ class UnderLineRule(Rule):
 #     - 遷移後的路徑會是 `/FCM/src/main/java/com/mitake/infra/repository/app/service/legacy/src/com/taifex/r2/web/m03`
 #     """
 
-#     def check(self):
-#         print(self.type)
+    # def __init__(self, page):
+    #     super().__init__(page)
+    #     self.set_assert_rule(self.todo)
+
+    # def todo(self):
+    #     '''
+    #     todo
+    #     '''
+    #     for count, line in enumerate(self.page.file_lines, start=0):
+    #         self.log_error_line(
+    #             count, self.todo.__name__, line)
 
 # # 程式碼
 
@@ -190,8 +220,18 @@ class UnderLineRule(Rule):
 #     public ModelAndView toQuery(HttpServletRequest request, HttpServletResponse response, HttpSession session) {
 #     """
 
-#     def check(self):
-#         print(self.type)
+
+    # def __init__(self, page):
+    #     super().__init__(page)
+    #     self.set_assert_rule(self.todo)
+
+    # def todo(self):
+    #     '''
+    #     todo
+    #     '''
+    #     for count, line in enumerate(self.page.file_lines, start=0):
+    #         self.log_error_line(
+    #             count, self.todo.__name__, line)
 
 
 # class ServiceImplAnnotationRule(Rule):
@@ -205,15 +245,26 @@ class UnderLineRule(Rule):
 #         }
 #     """
 
-#     def check(self):
-#         print(self.type)
+
+    # def __init__(self, page):
+    #     super().__init__(page)
+    #     self.set_assert_rule(self.todo)
+
+    # def todo(self):
+    #     '''
+    #     todo
+    #     '''
+    #     for count, line in enumerate(self.page.file_lines, start=0):
+    #         self.log_error_line(
+    #             count, self.todo.__name__, line)
 
 
 class GenericTypeRule(Rule):
     """
     - List 的型別要指定 不要是沒指定或? `List<?>`
     """
-    def __init__(self, page):   
+
+    def __init__(self, page):
         super().__init__(page)
         self.set_assert_rule(self.should_not_using_generic_type_in_return)
 
@@ -224,7 +275,8 @@ class GenericTypeRule(Rule):
         for count, line in enumerate(self.page.file_lines, start=0):
             angle_bracket = re.search(r'<.*>', line)
             if angle_bracket is not None and "?" in angle_bracket.group():
-                self.log_error_line(count, self.should_not_using_generic_type.__name__, line)
+                self.log_error_line(
+                    count, self.should_not_using_generic_type.__name__, line)
 
 
 class MethodNameRule(Rule):
@@ -232,10 +284,11 @@ class MethodNameRule(Rule):
     - 方法名稱不要大寫開頭
     """
 
-    def __init__(self, page):   
+    def __init__(self, page):
         super().__init__(page)
         self.set_assert_rule(self.method_name_initial_should_not_be_capital)
-        self.set_assert_rule(self.method_name_defination_initial_should_not_be_capital)
+        self.set_assert_rule(
+            self.method_name_defination_initial_should_not_be_capital)
 
     def method_name_initial_should_not_be_capital(self):
         '''
@@ -244,7 +297,8 @@ class MethodNameRule(Rule):
         for count, line in enumerate(self.page.file_lines, start=0):
             method_name = re.search(r'\w\.\w', line)
             if method_name is not None and method_name.group()[-1].isupper():
-                self.log_error_line(count, self.method_name_initial_should_not_be_capital.__name__, line)
+                self.log_error_line(
+                    count, self.method_name_initial_should_not_be_capital.__name__, line)
 
     def method_name_defination_initial_should_not_be_capital(self):
         '''
@@ -252,12 +306,13 @@ class MethodNameRule(Rule):
         '''
         for count, line in enumerate(self.page.file_lines, start=0):
             if re.search(r'\w\.\w', line):
-                continue # 表示是 method_name_initial_should_not_be_capital 的情況，跳過
+                continue  # 表示是 method_name_initial_should_not_be_capital 的情況，跳過
             if " new " in line:
-                continue # return new ModelAndView(INDEX_VIEW) 的情況
+                continue  # return new ModelAndView(INDEX_VIEW) 的情況
             method_name = re.search(r'\s\w*\(', line)
             if method_name is not None and method_name.group()[1].isupper():
-                self.log_error_line(count, self.method_name_defination_initial_should_not_be_capital.__name__, line)
+                self.log_error_line(
+                    count, self.method_name_defination_initial_should_not_be_capital.__name__, line)
 
 
 if __name__ == "__main__":
@@ -265,11 +320,12 @@ if __name__ == "__main__":
         """
         mocking data
         """
+
         def __init__(self):
             self.type = type(self).__name__
             self.file_path = "abc.txt"
             print(self.type)  # debug
-            with open(self.file_path, 'r') as f: # 測試時永遠以 abc.txt 當作對象
+            with open(self.file_path, 'r') as f:  # 測試時永遠以 abc.txt 當作對象
                 self.file_lines = f.readlines()
             self.rules = []
 
@@ -280,7 +336,8 @@ if __name__ == "__main__":
             for rule in self.rules:
                 rule.do_rule_check()
     page = TestPage()
-    GenericTypeRule(page).do_rule_check()
+    IfElseRule(page).do_rule_check()
+    # GenericTypeRule(page).do_rule_check()
     # MethodNameRule(page).do_rule_check()
     # JavaDocRule(page).do_rule_check()
     # CommentRule(page).do_rule_check()
