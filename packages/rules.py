@@ -70,6 +70,8 @@ class JavaDocRule(Rule):
         '''
         end_of_comment = False
         for count, line in enumerate(self.page.file_lines, start=0):
+            if "import" in line or "package" in line:
+                continue
             if "*/" in line:
                 end_of_comment = True
             if ";" in line and not end_of_comment:
