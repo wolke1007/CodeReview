@@ -1,5 +1,6 @@
-from .rules import *
-
+import os, sys; 
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+from rules import *
 
 class Page():
     def __init__(self, file_path: str):
@@ -60,3 +61,6 @@ class ControllerPage(Page):
 #                GenericTypeRule()
 #                ]
 #               )
+
+if __name__ == "__main__":
+    pass

@@ -1,8 +1,6 @@
 from typing import Callable
 from enum import Enum
-from utils import *
 import re
-import datetime
 import time
 
 class Rule():
