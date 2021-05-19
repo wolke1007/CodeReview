@@ -209,13 +209,22 @@ class UnderLineRule(Rule):
 #         print(self.type)
 
 
-# class GenericTypeRule(Rule):
-#     """
-#     - List 的型別要指定 不要是沒指定或? `List<?>`
-#     """
+class GenericTypeRule(Rule):
+    """
+    - List 的型別要指定 不要是沒指定或? `List<?>`
+    """
+    def __init__(self, page):   
+        super().__init__(page)
+        self.set_assert_rule(self.should_not_using_generic_type_in_return)
 
-#     def check(self):
-#         print(self.type)
+    def should_not_using_generic_type(self):
+        '''
+        搜尋所有 <xxxx> 的 pattern 檢查是否有 ? 在裡面
+        '''
+        for count, line in enumerate(self.page.file_lines, start=0):
+            angle_bracket = re.search(r'<.*>', line)
+            if angle_bracket is not None and "?" in angle_bracket.group():
+                self.log_error_line(count, self.should_not_using_generic_type.__name__, line)
 
 
 class MethodNameRule(Rule):
@@ -271,6 +280,7 @@ if __name__ == "__main__":
             for rule in self.rules:
                 rule.do_rule_check()
     page = TestPage()
-    MethodNameRule(page).do_rule_check()
+    GenericTypeRule(page).do_rule_check()
+    # MethodNameRule(page).do_rule_check()
     # JavaDocRule(page).do_rule_check()
     # CommentRule(page).do_rule_check()
