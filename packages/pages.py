@@ -1,6 +1,7 @@
 import os, sys; 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from rules import *
+from utils import *
 
 class Page():
     def __init__(self, file_path: str):
@@ -30,6 +31,9 @@ class ControllerPage(Page):
         super().__init__(file_path= file_path)
         self.controller_name = controller_name
         self.set_rules([CommentRule(self)])
+        self.sql_file_path = get_sql_file_path()
+        with open(self.sql_file_path, 'r') as f:
+            self.sql_file_lines = f.readlines()
         
 
 # class ServicePage(Page):

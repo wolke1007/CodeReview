@@ -8,6 +8,7 @@ with open('config.yaml', 'r', encoding='utf-8') as stream:
 PROJECT_ROOT_PATH = config.get('project_root_path')
 SERVICE_DIRECTORY_PATH = config.get('service_directory_path')
 CONTROLLER_DIRECTORY_PATH = config.get('controller_directory_path')
+SQL_DIRECTORY_PATH = config.get('sql_directory_path')
 
 def get_service_names(controller_file_path: str) -> list:
     with open(controller_file_path, 'r') as file:
@@ -36,6 +37,10 @@ def get_controller_file_path(controller_name: str) -> str:
             controller_name=controller_name,
             file_extension="java")
 
+def get_sql_file_path() -> str:
+    return "{root}{sql_directory_path}".format(
+            root=PROJECT_ROOT_PATH,
+            sql_directory_path=SQL_DIRECTORY_PATH)
 
 if __name__ == "__main__":
     assert get_service_file_paths(["a", "b"]) == ["/Users/cloud.chen/code/taifex-fdms-cms/src/main/java/com/mitake/infra/repository/app/service/a.java",

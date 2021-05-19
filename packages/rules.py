@@ -1,7 +1,11 @@
+from utils import *
 from typing import Callable
 from enum import Enum
 import re
 import time
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 
 class Rule():
@@ -41,6 +45,15 @@ class Rule():
                 count + 1,
                 function_name,
                 line
+            ))
+
+    def log_error_message(self, function_name: str, message: str):
+        self.error_logs.append(
+            self.log_template.format(
+                self.page.file_path,
+                "None",
+                function_name,
+                message
             ))
 
 # 註解
@@ -158,14 +171,11 @@ class UnderLineRule(Rule):
     - 收納該功能 jsp 及 js 檔案的資料夾應為 `a01sr08_13`
     """
 
-    def __init__(self, page, *argv):
+    def __init__(self, page):
         super().__init__(page)
-        self.set_assert_rule(self.controller_name_should_same_as_do_naming)
+        self.set_assert_rule(self.controller_name_should_same_as_do_query_naming)
 
-    # TODO 這個規則有分檢查檔案裡面的字，跟檔名
-    # 可能需要想一下是不是要設計一個檢查檔案(page)外事情的規則
-    # 或是用 path 的方式來進行檢查
-    def controller_name_should_same_as_do_naming(self):
+    def controller_name_should_same_as_do_query_naming(self):
         '''
         用 controller 的檔名去尋找是否存在於 phase-1-data.sql 中
         如果不存在則有兩種可能:
@@ -175,8 +185,25 @@ class UnderLineRule(Rule):
                 SQL: a0102_03
             2. 撰寫者沒有更新 update sql 導致搜尋不到
         '''
-        # self.page.file_path =
-        # self.log_error_line(count, self.code_comment_should_not_exist.__name__, line)
+        controller_name = self.page.controller_name[:-10].lower()
+        for line in self.page.sql_file_lines:
+            if controller_name in line:
+                return
+            if "_" in controller_name:
+                continue  # 如果原來就已經有底線就不用猜測了，如果找完整個檔案都沒有就是沒有
+            # 在所有位置加上底線試試看，如果有則回報答案
+            for index in range(1, len(controller_name)):
+                tmp_list = list(controller_name)
+                tmp_list.insert(index, "_")
+                controller_name_with_underline = "".join(tmp_list)
+                if controller_name_with_underline in line:
+                    self.log_error_message(
+                        function_name=self.controller_name_should_same_as_do_naming.__name__,
+                        message="controller 的命名應為: " + controller_name_with_underline + " 目前叫做: " + controller_name)
+                    return
+        self.log_error_message(
+            function_name=self.controller_name_should_same_as_do_naming.__name__,
+            message="controller 的命名: " + controller_name + " 於 update sql 中不存在，請確認 commit 是否有更新此檔案")
 
 
 # class LegacyDirectoryPathRule(Rule):
@@ -248,28 +275,38 @@ class RequestMethodRule(Rule):
                     request_post = False
 
 
-# class ServiceImplAnnotationRule(Rule):
-#     """
-#     - ServiceImpl內的方法，從介面實作的請都記得標上 `@Override`
-#     - 要是裡面的方法是 insert update delete 需要加上 @Transactional
-#     @Transactional
-#         @Override
-#         public int deleteA01ar(String userId) {
-#                 return a01arDao.deleteA01ar(userId);
-#         }
-#     """
+class ServiceImplAnnotationRule(Rule):
+    """
+    - ServiceImpl內的方法，從介面實作的請都記得標上 `@Override`
+    - 要是裡面的方法是 insert update delete 需要加上 @Transactional
+    @Transactional
+        @Override
+        public int deleteA01ar(String userId) {
+                return a01arDao.deleteA01ar(userId);
+        }
+    """
 
-    # def __init__(self, page):
-    #     super().__init__(page)
-    #     self.set_assert_rule(self.todo)
+    def __init__(self, page):
+        super().__init__(page)
+        self.set_assert_rule(self.method_should_add_override_annotation)
+        self.set_assert_rule(self.method_should_add_transaction_annotation)
 
-    # def todo(self):
-    #     '''
-    #     todo
-    #     '''
-    #     for count, line in enumerate(self.page.file_lines, start=0):
-    #         self.log_error_line(
-    #             count, self.todo.__name__, line)
+    def method_should_add_override_annotation(self):
+        '''
+        檢查每個方法在定義時前面一行要有 @Override
+        '''
+        for count, line in enumerate(self.page.file_lines, start=0):
+            self.log_error_line(
+                count, self.todo.__name__, line)
+
+    def method_should_add_transaction_annotation(self):
+        '''
+        update insert delete 該要有 @Transaction
+        檢查每個方法在定義時前一行或前兩行要有 @Transaction
+        '''
+        for count, line in enumerate(self.page.file_lines, start=0):
+            self.log_error_line(
+                count, self.todo.__name__, line)
 
 
 class GenericTypeRule(Rule):
@@ -337,10 +374,14 @@ if __name__ == "__main__":
         def __init__(self):
             self.type = type(self).__name__
             self.file_path = "abc.txt"
+            self.controller_name = "M022388Controller"
             print(self.type)  # debug
             with open(self.file_path, 'r') as f:  # 測試時永遠以 abc.txt 當作對象
                 self.file_lines = f.readlines()
             self.rules = []
+            self.sql_file_path = get_sql_file_path()
+            with open(self.sql_file_path, 'r') as f:
+                self.sql_file_lines = f.readlines()
 
         def set_rules(self, rules: list):
             self.rules = rules
@@ -349,7 +390,8 @@ if __name__ == "__main__":
             for rule in self.rules:
                 rule.do_rule_check()
     page = TestPage()
-    RequestMethodRule(page).do_rule_check()
+    UnderLineRule(page).do_rule_check()
+    # RequestMethodRule(page).do_rule_check()
     # IfElseRule(page).do_rule_check()
     # GenericTypeRule(page).do_rule_check()
     # MethodNameRule(page).do_rule_check()
