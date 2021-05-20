@@ -1,3 +1,4 @@
+from utils import *
 from typing import Callable
 from enum import Enum
 import re
@@ -5,7 +6,6 @@ import time
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-from utils import *
 
 
 class Rule():
@@ -24,6 +24,7 @@ class Rule():
                              "line: {line} \n"
                              "file: {file} \n"
                              "code: >>>{code}\n"
+                             "recommend: {recommend}\n"
                              "------------------------------------------------------\n\n")
 
     def do_rule_check(self):
@@ -42,22 +43,24 @@ class Rule():
         with open(self.log_path, 'a') as file:
             file.writelines(self.error_logs)
 
-    def log_error_line(self, count: int, function_name: str, line: str):
+    def log_error_line(self, count: int, function_name: str, line: str, recommend: str):
         self.error_logs.append(
             self.log_template.format(
                 file=self.page.file_path,
                 line=count + 1,
                 rule=function_name,
-                code=line
+                code=line,
+                recommend=recommend
             ))
 
-    def log_error_message(self, function_name: str, message: str):
+    def log_error_message(self, function_name: str, message: str, recommend: str):
         self.error_logs.append(
             self.log_template.format(
                 file=self.page.file_path,
                 line="None",
                 rule=function_name,
-                code=message
+                code=message,
+                recommend=recommend
             ))
 
 # 註解
@@ -100,11 +103,15 @@ class JavaDocRule(Rule):
                 end_of_comment = True
             if ";" in line and not end_of_comment:
                 self.log_error_line(
-                    count, self.java_doc_should_exist.__name__, line)
+                    count, self.java_doc_should_exist.__name__, line,
+                    "目前 java doc 的規範為 : Interface Service 內的方法說明以及 Dao 內的方法需寫上 java doc")
                 end_of_comment = False
                 continue
             if ";" in line and end_of_comment:
                 end_of_comment = False
+
+    # TODO 註解格式是否正確
+    # TODO 註解參數是否正確
 
 
 class CommentRule(Rule):
@@ -122,7 +129,7 @@ class CommentRule(Rule):
 
     def code_comment_should_not_exist(self):
         '''
-        程式的邏輯註解不該留下，商業邏輯類的說明註解則留下
+        程式的 "邏輯註解" 不該留下，商業邏輯類的 "說明註解" 則留下以利後續程式維護
         目前只能辨識出有中文的則代表是說明註解
         其他的則標記出來做人工審查
         '''
@@ -140,7 +147,8 @@ class CommentRule(Rule):
                     chinese_in_line = True  # 有註解，且有中文，判斷為說明邏輯
             if not chinese_in_line:
                 self.log_error_line(
-                    count, self.code_comment_should_not_exist.__name__, line)
+                    count, self.code_comment_should_not_exist.__name__, line,
+                    '程式的 "邏輯註解" 不該留下，商業邏輯類的 "說明註解" 則留下以利後續程式維護')
 
 # # 風格
 
@@ -164,7 +172,15 @@ class IfElseRule(Rule):
                 "\tif(" in line or
                     " if(" in line) and "{" not in line:
                 self.log_error_line(
-                    count, self.if_statement_should_with_bracket_mark.__name__, line)
+                    count, self.if_statement_should_with_bracket_mark.__name__, line,
+                    recommend='不要有單行if, for statment')
+            if ("\tfor (" in line or
+                " for (" in line or
+                "\tfor(" in line or
+                    " for(" in line) and "{" not in line:
+                self.log_error_line(
+                    count, self.if_statement_should_with_bracket_mark.__name__, line,
+                    recommend='不要有單行if, for statment')
 
 
 class UnderLineRule(Rule):
@@ -179,10 +195,14 @@ class UnderLineRule(Rule):
 
     def __init__(self, page):
         super().__init__(page)
-        self.set_assert_rule(self.controller_name_should_same_as_do_query_naming)
-        self.set_assert_rule(self.requestmapping_name_should_same_as_do_query_naming)
-        self.set_assert_rule(self.jsp_directory_name_should_same_as_do_query_naming)
-        self.set_assert_rule(self.js_directory_name_should_same_as_do_query_naming)
+        self.set_assert_rule(
+            self.controller_name_should_same_as_do_query_naming)
+        self.set_assert_rule(
+            self.requestmapping_name_should_same_as_do_query_naming)
+        self.set_assert_rule(
+            self.jsp_directory_name_should_same_as_do_query_naming)
+        self.set_assert_rule(
+            self.js_directory_name_should_same_as_do_query_naming)
 
     def controller_name_should_same_as_do_query_naming(self) -> bool:
         '''
@@ -194,7 +214,8 @@ class UnderLineRule(Rule):
                 SQL: a0102_03
             2. 撰寫者沒有更新 update sql 導致搜尋不到
         '''
-        controller_name = self.page.controller_name[:-10][0].lower() + self.page.controller_name[:-10][1:]
+        controller_name = self.page.controller_name[:-
+                                                    10][0].lower() + self.page.controller_name[:-10][1:]
         for line in self.page.sql_file_lines:
             pattern = '\/' + controller_name + '\/'
             # sql 裡面有可能是大寫或小寫開頭，故要 ignorecase
@@ -204,16 +225,24 @@ class UnderLineRule(Rule):
             if "_" in controller_name:
                 continue  # 如果原來就已經有底線就不用猜測了，如果找完整個檔案都沒有就是沒有
             # 在所有位置加上底線試試看，如果有則回報答案
-            find_guess_name = self._guess_name_with_underline_(line, controller_name)
+            find_guess_name = self._guess_name_with_underline_(
+                line, controller_name)
             # 不一樣代表有找到
             if controller_name != find_guess_name:
+                message = "controller 的命名應為: " + \
+                    find_guess_name[0].upper() + find_guess_name[1:] + \
+                    " 目前叫做: " + controller_name
                 self.log_error_message(
-                        function_name=self.controller_name_should_same_as_do_query_naming.__name__,
-                        message="controller 的命名應為: " + find_guess_name[0].upper() + find_guess_name[1:] + " 目前叫做: " + controller_name)
+                    function_name=self.controller_name_should_same_as_do_query_naming.__name__,
+                    message=message,
+                    recommend='保留原專案之下底線，'+message)
                 return False
+        message = "controller 的命名: " + controller_name + \
+            " 於 update sql 中不存在，請確認 commit 是否有更新此檔案"
         self.log_error_message(
             function_name=self.controller_name_should_same_as_do_query_naming.__name__,
-            message="controller 的命名: " + controller_name + " 於 update sql 中不存在，請確認 commit 是否有更新此檔案")
+            message=message,
+            recommend=message)
         return False
 
     def requestmapping_name_should_same_as_do_query_naming(self) -> bool:
@@ -233,22 +262,27 @@ class UnderLineRule(Rule):
                 request_name = match.group()[1:]
                 for line in self.page.sql_file_lines:
                     if request_name in line:
-                        return True# 用原來的名字就找到了
+                        return True  # 用原來的名字就找到了
                     if "_" in request_name:
                         continue
                         # 如果原來就已經有底線就不用猜測了，如果找完整個檔案都沒有就是沒有
-                    find_guess_name = self._guess_name_with_underline_(line, request_name)
+                    find_guess_name = self._guess_name_with_underline_(
+                        line, request_name)
                     # 不一樣代表有找到
                     if request_name != find_guess_name:
                         self.log_error_message(
                             function_name=self.requestmapping_name_should_same_as_do_query_naming.__name__,
-                            message="request 的命名應為: " + find_guess_name + " 目前叫做: " + request_name)
+                            message="request 的命名應為: " + find_guess_name + " 目前叫做: " + request_name,
+                            recommend='若 do action 的 query 原來有底線則 RequestMapping 也需要有底線')
                         return False
+        message = "request 的命名: " + request_name + \
+            " 於 update sql 中不存在，請確認 commit 是否有更新此檔案"
         self.log_error_message(
             function_name=self.requestmapping_name_should_same_as_do_query_naming.__name__,
-            message="request 的命名: " + request_name + " 於 update sql 中不存在，請確認 commit 是否有更新此檔案")
+            message=message,
+            recommend=message)
         return False
-    
+
     def jsp_directory_name_should_same_as_do_query_naming(self):
         '''
         若 do action 的 query 原來有底線
@@ -259,7 +293,7 @@ class UnderLineRule(Rule):
         '''
         controller_name = self.page.controller_name[:-10]
         jsp_dir_name = controller_name
-       
+
         # 先看 controller name 有沒有在 sql file 中
         for line in self.page.sql_file_lines:
             pattern = '\/' + controller_name + '\/'
@@ -269,18 +303,22 @@ class UnderLineRule(Rule):
                 jsp_dir_name = match.group()[1:-1]
                 break
         else:
-            message = "在 sql file 裡找不到 controller name: {}".format(controller_name)
+            message = "在 sql file 裡找不到 controller name: {}".format(
+                controller_name)
             self.log_error_message(
                 function_name=self.jsp_directory_name_should_same_as_do_query_naming.__name__,
-                message= message)
+                message=message,
+            recommend=message)
             return
         full_jsp_diretory_path = get_jsp_diretory_path() + jsp_dir_name
         if not os.path.isdir(full_jsp_diretory_path):
             # 如果有在 sql file 中但沒找到則報錯
-            message = "\n{}\njsp 資料夾名稱: {} 在對應路徑找不到資料夾".format(full_jsp_diretory_path, jsp_dir_name)
+            message = "\n{}\njsp 資料夾名稱: {} 在對應路徑找不到資料夾".format(
+                full_jsp_diretory_path, jsp_dir_name)
             self.log_error_message(
                 function_name=self.jsp_directory_name_should_same_as_do_query_naming.__name__,
-                message= message)
+                message=message,
+                recommend=message)
             return
 
     def js_directory_name_should_same_as_do_query_naming(self):
@@ -293,7 +331,7 @@ class UnderLineRule(Rule):
         '''
         controller_name = self.page.controller_name[:-10]
         js_dir_name = controller_name
-       
+
         # 先看 controller name 有沒有在 sql file 中
         for line in self.page.sql_file_lines:
             pattern = '\/' + controller_name + '\/'
@@ -303,18 +341,22 @@ class UnderLineRule(Rule):
                 js_dir_name = match.group()[1:-1]
                 break
         else:
-            message = "在 sql file 裡找不到 controller name: {}".format(controller_name)
+            message = "在 sql file 裡找不到 controller name: {}".format(
+                controller_name)
             self.log_error_message(
                 function_name=self.js_directory_name_should_same_as_do_query_naming.__name__,
-                message= message)
+                message=message,
+            recommend=message)
             return
         full_js_diretory_path = get_js_diretory_path() + js_dir_name
         if not os.path.isdir(full_js_diretory_path):
             # 如果有在 sql file 中但沒找到則報錯
-            message = "\n{}\njs 資料夾名稱: {} 在對應路徑找不到資料夾".format(full_js_diretory_path, js_dir_name)
+            message = "\n{}\njs 資料夾名稱: {} 在對應路徑找不到資料夾".format(
+                full_js_diretory_path, js_dir_name)
             self.log_error_message(
                 function_name=self.js_directory_name_should_same_as_do_query_naming.__name__,
-                message= message)
+                message=message,
+            recommend=message)
             return
 
     def _guess_name_with_underline_(self, line: str, name: str) -> str:
@@ -332,7 +374,7 @@ class UnderLineRule(Rule):
             if match is not None:
                 return controller_name_with_underline
         return name
-    
+
 
 class LegacyDirectoryPathRule(Rule):
     """
@@ -344,7 +386,8 @@ class LegacyDirectoryPathRule(Rule):
 
     def __init__(self, page):
         super().__init__(page)
-        self.set_assert_rule(self.legacy_file_name_and_path_should_be_same_as_old_project)
+        self.set_assert_rule(
+            self.legacy_file_name_and_path_should_be_same_as_old_project)
 
     def legacy_file_name_and_path_should_be_same_as_old_project(self):
         '''
@@ -359,11 +402,13 @@ class LegacyDirectoryPathRule(Rule):
                 if "MultipartDispatch" in line:
                     continue
                 # +7 是代表從 legacy 之後開始，-1 則是為了要避免擷取到看不到的換行符號
-                old_file_path = package_name[package_name.index("legacy")+7:-1].replace(".", "/").replace(";", ".java")
+                old_file_path = package_name[package_name.index(
+                    "legacy")+7:-1].replace(".", "/").replace(";", ".java")
                 old_file_path = get_old_project_file_path(old_file_path)
                 if not os.path.isfile(old_file_path):
                     self.log_error_line(
-                        count, self.legacy_file_name_and_path_should_be_same_as_old_project.__name__, line)
+                        count, self.legacy_file_name_and_path_should_be_same_as_old_project.__name__, line,
+                        '檢查 import 中的 package 路徑，若為 legacy 檢查是否使用與舊專案一樣的路徑')
 
 # # 程式碼
 
@@ -443,7 +488,8 @@ class ServiceImplAnnotationRule(Rule):
                 # 前一行或前兩行至少要有 @Override annotation 否則報錯
                 if "@Override" not in self.page.file_lines[count - 1] and "@Override" not in self.page.file_lines[count - 2]:
                     self.log_error_line(
-                        count, self.method_should_add_override_annotation.__name__, line)
+                        count, self.method_should_add_override_annotation.__name__, line,
+                        '檢查每個方法在定義時前面要有 @Override')
 
     def method_should_add_transaction_annotation(self):
         '''
@@ -460,13 +506,15 @@ class ServiceImplAnnotationRule(Rule):
                         # 前一行或前兩行至少要有 @Override annotation 否則報錯
                         if "@Transaction" not in self.page.file_lines[count - 1] and "@Transaction" not in self.page.file_lines[count - 2]:
                             self.log_error_line(
-                                count, self.method_should_add_transaction_annotation.__name__, line)
+                                count, self.method_should_add_transaction_annotation.__name__, line,
+                                'update insert delete 該要有 @Transaction')
 
     def method_should_using_restricted_name(self):
         '''
         檢查每個方法使用限制的動詞當做名稱 "update", "insert", "delete", "find", "get", "query", "select"
         '''
-        restrict_method_types = ["update", "insert", "delete", "find", "get", "query", "select"]
+        restrict_method_types = ["update", "insert",
+                                 "delete", "find", "get", "query", "select"]
         for count, line in enumerate(self.page.file_lines, start=0):
             if "implements" in line:
                 continue
@@ -479,7 +527,8 @@ class ServiceImplAnnotationRule(Rule):
                 if not using_properly_name:
                     self.log_error_message(
                         function_name=self.method_should_using_restricted_name.__name__,
-                        message='dao 方法的命名應使用: "find", "get", "query", "select" "update", "insert", "delete"，目前叫做: ' + line)
+                        message='dao 方法的命名應使用: "find", "get", "query", "select" "update", "insert", "delete"，目前叫做: ' + line,
+                        recommend='dao 方法的命名應使用: "find", "get", "query", "select" "update", "insert", "delete"')
 
 
 class GenericTypeRule(Rule):
@@ -523,7 +572,8 @@ class MethodNameRule(Rule):
             method_name = re.search(r'\w\.\w', line)
             if method_name is not None and method_name.group()[-1].isupper():
                 self.log_error_line(
-                    count, self.method_name_initial_should_not_be_capital.__name__, line)
+                    count, self.method_name_initial_should_not_be_capital.__name__, line,
+                    recommend='方法名稱不要大寫開頭')
 
     def method_name_defination_initial_should_not_be_capital(self):
         '''
@@ -537,7 +587,8 @@ class MethodNameRule(Rule):
             method_name = re.search(r'\s\w*\(', line)
             if method_name is not None and method_name.group()[1].isupper():
                 self.log_error_line(
-                    count, self.method_name_defination_initial_should_not_be_capital.__name__, line)
+                    count, self.method_name_defination_initial_should_not_be_capital.__name__, line,
+                    recommend='方法名稱不要大寫開頭')
 
 
 if __name__ == "__main__":
