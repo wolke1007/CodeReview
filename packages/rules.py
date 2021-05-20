@@ -175,11 +175,12 @@ class UnderLineRule(Rule):
 
     def __init__(self, page):
         super().__init__(page)
-        self.set_assert_rule(self.controller_name_should_same_as_do_query_naming)
-        self.set_assert_rule(self.requestmapping_name_should_same_as_do_query_naming)
+        # self.set_assert_rule(self.controller_name_should_same_as_do_query_naming)
+        # self.set_assert_rule(self.requestmapping_name_should_same_as_do_query_naming)
+        # self.set_assert_rule(self.jsp_directory_name_should_same_as_do_query_naming)
+        self.set_assert_rule(self.js_directory_name_should_same_as_do_query_naming)
 
-
-    def controller_name_should_same_as_do_query_naming(self):
+    def controller_name_should_same_as_do_query_naming(self) -> bool:
         '''
         用 controller 的檔名去尋找是否存在於 phase-1-data.sql 中
         如果不存在則有兩種可能:
@@ -192,7 +193,7 @@ class UnderLineRule(Rule):
         controller_name = self.page.controller_name[:-10].lower()
         for line in self.page.sql_file_lines:
             if controller_name in line:
-                return
+                return True
             if "_" in controller_name:
                 continue  # 如果原來就已經有底線就不用猜測了，如果找完整個檔案都沒有就是沒有
             # 在所有位置加上底線試試看，如果有則回報答案
@@ -202,15 +203,16 @@ class UnderLineRule(Rule):
                 self.log_error_message(
                         function_name=self.controller_name_should_same_as_do_query_naming.__name__,
                         message="controller 的命名應為: " + find_guess_name + " 目前叫做: " + controller_name)
-                return
+                return False
         self.log_error_message(
             function_name=self.controller_name_should_same_as_do_query_naming.__name__,
             message="controller 的命名: " + controller_name + " 於 update sql 中不存在，請確認 commit 是否有更新此檔案")
+        return False
 
-    def requestmapping_name_should_same_as_do_query_naming(self):
+    def requestmapping_name_should_same_as_do_query_naming(self) -> bool:
         '''
         若 do action 的 query 原來有底線
-        則 RequestMapping 則也需要有底線
+        則 RequestMapping 也需要有底線
         例：
             do action:  a01sr08_33
             RequestMapping: @RequestMapping("/a01sr08_33")
@@ -224,7 +226,7 @@ class UnderLineRule(Rule):
                 request_name = match.group()[1:]
                 for line in self.page.sql_file_lines:
                     if request_name in line:
-                        return # 用原來的名字就找到了
+                        return True# 用原來的名字就找到了
                     if "_" in request_name:
                         continue
                         # 如果原來就已經有底線就不用猜測了，如果找完整個檔案都沒有就是沒有
@@ -234,18 +236,72 @@ class UnderLineRule(Rule):
                         self.log_error_message(
                             function_name=self.requestmapping_name_should_same_as_do_query_naming.__name__,
                             message="request 的命名應為: " + find_guess_name + " 目前叫做: " + request_name)
+                        return False
         self.log_error_message(
             function_name=self.requestmapping_name_should_same_as_do_query_naming.__name__,
             message="request 的命名: " + request_name + " 於 update sql 中不存在，請確認 commit 是否有更新此檔案")
+        return False
     
     def jsp_directory_name_should_same_as_do_query_naming(self):
-        #TODO
-        pass
+        '''
+        若 do action 的 query 原來有底線
+        則 jsp 資料夾也需要有底線
+        例：
+            do action: a01sr08_33
+            jsp folder path: /Users/cloud.chen/code/taifex-fdms-cms/src/main/webapp/WEB-INF/jsp/a01sr08_33
+        '''
+        controller_name = self.page.controller_name[:-10].lower()
+        jsp_dir_name = controller_name
+       
+        # 先看 controller name 有沒有在 sql file 中
+        for line in self.page.sql_file_lines:
+            if controller_name in line:
+                break
+        else:
+            message = "在 sql file 裡找不到 controller name: {}".format(controller_name)
+            self.log_error_message(
+                function_name=self.jsp_directory_name_should_same_as_do_query_naming.__name__,
+                message= message)
+            return
+        full_jsp_diretory_path = get_jsp_diretory_path() + jsp_dir_name
+        if not os.path.isdir(full_jsp_diretory_path):
+            # 如果有在 sql file 中但沒找到則報錯
+            message = "\n{}\njsp 資料夾名稱: {} 在對應路徑找不到資料夾".format(full_jsp_diretory_path, jsp_dir_name)
+            self.log_error_message(
+                function_name=self.jsp_directory_name_should_same_as_do_query_naming.__name__,
+                message= message)
+            return
 
     def js_directory_name_should_same_as_do_query_naming(self):
-        #TODO
-        pass
-            
+        '''
+        若 do action 的 query 原來有底線
+        則 js 資料夾也需要有底線
+        例：
+            do action: a01sr08_33
+            js folder path: /Users/cloud.chen/code/taifex-fdms-cms/src/main/resources/static/js/a01sr08_33
+        '''
+        controller_name = self.page.controller_name[:-10].lower()
+        js_dir_name = controller_name
+       
+        # 先看 controller name 有沒有在 sql file 中
+        for line in self.page.sql_file_lines:
+            if controller_name in line:
+                break
+        else:
+            message = "在 sql file 裡找不到 controller name: {}".format(controller_name)
+            self.log_error_message(
+                function_name=self.js_directory_name_should_same_as_do_query_naming.__name__,
+                message= message)
+            return
+        full_js_diretory_path = get_js_diretory_path() + js_dir_name
+        if not os.path.isdir(full_js_diretory_path):
+            # 如果有在 sql file 中但沒找到則報錯
+            message = "\n{}\njs 資料夾名稱: {} 在對應路徑找不到資料夾".format(full_js_diretory_path, js_dir_name)
+            self.log_error_message(
+                function_name=self.js_directory_name_should_same_as_do_query_naming.__name__,
+                message= message)
+            return
+
     def _guess_name_with_underline_(self, line: str, name: str) -> str:
         '''
         在所有位置加上底線試試看，如果有則回報答案
@@ -274,13 +330,14 @@ class LegacyDirectoryPathRule(Rule):
 
     def legacy_file_name_and_path_should_be_same_as_old_project(self):
         '''
-        todo
+        檢查 import 中的 package 路徑，若有 legacy 字串檢查是否於專案有一樣的路徑
         '''
         for count, line in enumerate(self.page.file_lines, start=0):
             if "import" not in line:
                 continue
             package_name = line.split(" ")[1]
             if "legacy" in package_name:
+                # 已知 MultipartDispatch 系列都沒有依照對應路徑擺放，故略過
                 if "MultipartDispatch" in line:
                     continue
                 # +7 是代表從 legacy 之後開始，-1 則是為了要避免擷取到看不到的換行符號
@@ -438,7 +495,7 @@ if __name__ == "__main__":
         def __init__(self):
             self.type = type(self).__name__
             self.file_path = "abc.java"
-            self.controller_name = "A01sr08_33Controller"
+            self.controller_name = "A01sr0833Controller"
             print(self.type)  # debug
             with open(self.file_path, 'r') as f:  # 測試時永遠以 abc.java 當作對象
                 self.file_lines = f.readlines()

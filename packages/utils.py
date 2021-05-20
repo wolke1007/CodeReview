@@ -10,6 +10,8 @@ OLD_PROJECT_ROOT_PATH = config.get('old_project_root_path')
 SERVICE_DIRECTORY_PATH = config.get('service_directory_path')
 CONTROLLER_DIRECTORY_PATH = config.get('controller_directory_path')
 SQL_DIRECTORY_PATH = config.get('sql_directory_path')
+JSP_DIRETORY_PATH = config.get('jsp_directory_path')
+JS_DIRETORY_PATH = config.get('js_directory_path')
 
 def get_service_names(controller_file_path: str) -> list:
     with open(controller_file_path, 'r') as file:
@@ -45,6 +47,12 @@ def get_sql_file_path() -> str:
 
 def get_old_project_file_path(file_path: str) -> str:
     return OLD_PROJECT_ROOT_PATH + "/" + file_path
+
+def get_jsp_diretory_path() -> str:
+    return PROJECT_ROOT_PATH + JSP_DIRETORY_PATH
+
+def get_js_diretory_path() -> str:
+    return PROJECT_ROOT_PATH + JS_DIRETORY_PATH
 
 
 if __name__ == "__main__":
