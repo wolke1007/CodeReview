@@ -14,12 +14,12 @@ class main():
         service_file_paths = get_service_file_paths(service_names)
         for service_file_path in service_file_paths:
             print(service_file_path)
-            ServicePage(file_path=service_file_path).check_all_rules()
+            ServicePage(file_path=service_file_path, controller_name=controller_name).check_all_rules()
         # 檢查 ServiceImpl
         serviceimpl_file_paths = get_serviceimpl_file_paths(service_names)
         for serviceimpl_file_path in serviceimpl_file_paths:
             print(serviceimpl_file_path)
-            ServiceImplPage(file_path=serviceimpl_file_path).check_all_rules()
+            ServiceImplPage(file_path=serviceimpl_file_path, controller_name=controller_name).check_all_rules()
             
 
 if __name__ == "__main__":

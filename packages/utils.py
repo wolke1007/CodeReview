@@ -37,7 +37,7 @@ def get_service_file_paths(service_names: list) -> list:
 def get_serviceimpl_file_paths(service_names: list) -> list:
     paths = []
     for service_name in service_names:
-        paths.append("{root}{serviceimpl_dir_path}/{service_name}.{file_extension}".format(
+        paths.append("{root}{serviceimpl_dir_path}/{serviceimpl_name}.{file_extension}".format(
             root=PROJECT_ROOT_PATH,
             serviceimpl_dir_path=SERVICEIMPL_DIRECTORY_PATH,
             serviceimpl_name=service_name + "Impl",

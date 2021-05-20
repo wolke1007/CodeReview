@@ -51,8 +51,7 @@ class ControllerPage(Page):
 class ServiceImplPage(Page):
     def __init__(self, file_path: str, controller_name: str):
         super().__init__(file_path= file_path, controller_name= controller_name)
-        self.set_rules([JavaDocRule(self),
-                        CommentRule(self),
+        self.set_rules([CommentRule(self),
                         LegacyDirectoryPathRule(self),
                         ServiceImplAnnotationRule(self),
                         GenericTypeRule(self),
