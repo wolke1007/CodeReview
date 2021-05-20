@@ -106,7 +106,6 @@ class JavaDocRule(Rule):
                 pattern = return_type + r'\s\w*\('
                 match = re.search(pattern, line)
                 if match:
-                    print(match.group())
                     if "*/" not in self.page.file_lines[count - 1] and "*/" not in self.page.file_lines[count - 2]:
                         self.log_error_line(
                             count, self.java_doc_should_exist.__name__, line,
