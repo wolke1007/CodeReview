@@ -20,7 +20,7 @@ class Rule():
             time=time.strftime("%Y-%m-%d %X", time.localtime()))]
         self.log_path = "./log.txt"
         self.log_template = ("file: {} line: {} violate rule: \"{}\"\n"
-                             "code: >>>{}\n")
+                             "code: >>>{}\n\n")
 
     def do_rule_check(self):
         self.__check_with_assert_rule()
@@ -190,9 +190,12 @@ class UnderLineRule(Rule):
                 SQL: a0102_03
             2. 撰寫者沒有更新 update sql 導致搜尋不到
         '''
-        controller_name = self.page.controller_name[:-10].lower()
+        controller_name = self.page.controller_name[:-10][0].lower() + self.page.controller_name[:-10][1:]
         for line in self.page.sql_file_lines:
-            if controller_name in line:
+            pattern = '\/' + controller_name + '\/'
+            # sql 裡面有可能是大寫或小寫開頭，故要 ignorecase
+            match = re.search(pattern, line, re.IGNORECASE)
+            if match is not None:
                 return True
             if "_" in controller_name:
                 continue  # 如果原來就已經有底線就不用猜測了，如果找完整個檔案都沒有就是沒有
@@ -202,7 +205,7 @@ class UnderLineRule(Rule):
             if controller_name != find_guess_name:
                 self.log_error_message(
                         function_name=self.controller_name_should_same_as_do_query_naming.__name__,
-                        message="controller 的命名應為: " + find_guess_name + " 目前叫做: " + controller_name)
+                        message="controller 的命名應為: " + find_guess_name[0].upper() + find_guess_name[1:] + " 目前叫做: " + controller_name)
                 return False
         self.log_error_message(
             function_name=self.controller_name_should_same_as_do_query_naming.__name__,
@@ -221,7 +224,7 @@ class UnderLineRule(Rule):
         for line in self.page.file_lines:
             if "@RequestMapping" not in line:
                 continue
-            match = re.search(r'/\w*', line)
+            match = re.search(r'/\w*', line, re.IGNORECASE)
             if match is not None:
                 request_name = match.group()[1:]
                 for line in self.page.sql_file_lines:
@@ -250,12 +253,16 @@ class UnderLineRule(Rule):
             do action: a01sr08_33
             jsp folder path: /Users/cloud.chen/code/taifex-fdms-cms/src/main/webapp/WEB-INF/jsp/a01sr08_33
         '''
-        controller_name = self.page.controller_name[:-10].lower()
+        controller_name = self.page.controller_name[:-10]
         jsp_dir_name = controller_name
        
         # 先看 controller name 有沒有在 sql file 中
         for line in self.page.sql_file_lines:
-            if controller_name in line:
+            pattern = '\/' + controller_name + '\/'
+            # sql 裡面有可能是大寫或小寫開頭，故要 ignorecase
+            match = re.search(pattern, line, re.IGNORECASE)
+            if match is not None:
+                jsp_dir_name = match.group()[1:-1]
                 break
         else:
             message = "在 sql file 裡找不到 controller name: {}".format(controller_name)
@@ -280,12 +287,16 @@ class UnderLineRule(Rule):
             do action: a01sr08_33
             js folder path: /Users/cloud.chen/code/taifex-fdms-cms/src/main/resources/static/js/a01sr08_33
         '''
-        controller_name = self.page.controller_name[:-10].lower()
+        controller_name = self.page.controller_name[:-10]
         js_dir_name = controller_name
        
         # 先看 controller name 有沒有在 sql file 中
         for line in self.page.sql_file_lines:
-            if controller_name in line:
+            pattern = '\/' + controller_name + '\/'
+            # sql 裡面有可能是大寫或小寫開頭，故要 ignorecase
+            match = re.search(pattern, line, re.IGNORECASE)
+            if match is not None:
+                js_dir_name = match.group()[1:-1]
                 break
         else:
             message = "在 sql file 裡找不到 controller name: {}".format(controller_name)
@@ -306,12 +317,15 @@ class UnderLineRule(Rule):
         '''
         在所有位置加上底線試試看，如果有則回報答案
         '''
-        name = name.lower()
+        name = name[0].lower() + name[1:]
         for index in range(len(name), 0, -1):
             tmp_list = list(name)
             tmp_list.insert(index, "_")
             controller_name_with_underline = "".join(tmp_list)
-            if controller_name_with_underline in line:
+            pattern = '\/' + controller_name_with_underline + '\/'
+            # sql 裡面有可能是大寫或小寫開頭，故要 ignorecase
+            match = re.search(pattern, line, re.IGNORECASE)
+            if match is not None:
                 return controller_name_with_underline
         return name
     
@@ -466,6 +480,8 @@ class MethodNameRule(Rule):
         搜尋所有 xxx.xxx 的 pattern 並把 . 後面的部分當作 method name 做檢查
         '''
         for count, line in enumerate(self.page.file_lines, start=0):
+            if "RequestMethod.GET" in line or "RequestMethod.POST" in line:
+                continue
             method_name = re.search(r'\w\.\w', line)
             if method_name is not None and method_name.group()[-1].isupper():
                 self.log_error_line(
