@@ -8,7 +8,7 @@ class Page():
         self.type = type(self).__name__
         self.controller_name = controller_name
         self.file_path = file_path
-        print(self.type)  # debug
+        # print(self.type)  # debug
         with open(self.file_path, 'r') as f:
             self.file_lines = f.readlines()
         self.rules = []

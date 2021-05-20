@@ -11,7 +11,7 @@ from utils import *
 class Rule():
     def __init__(self, page):
         self.type = type(self).__name__
-        print(self.type)  # debug
+        # print(self.type)  # debug
         self.assert_logics = []
         self.page = page
         # 需要印出來的 log 全部 append 在這個 list 裡面並在 do_rule_check 最後一次一起印
@@ -19,8 +19,12 @@ class Rule():
             name=self.page.file_path,
             time=time.strftime("%Y-%m-%d %X", time.localtime()))]
         self.log_path = "./log.txt"
-        self.log_template = ("file: {} line: {} violate rule: \"{}\"\n"
-                             "code: >>>{}\n\n")
+        self.log_template = ("------------------------------------------------------\n"
+                             "violate rule: \"{rule}\"\n"
+                             "line: {line} \n"
+                             "file: {file} \n"
+                             "code: >>>{code}\n"
+                             "------------------------------------------------------\n\n")
 
     def do_rule_check(self):
         self.__check_with_assert_rule()
@@ -41,19 +45,19 @@ class Rule():
     def log_error_line(self, count: int, function_name: str, line: str):
         self.error_logs.append(
             self.log_template.format(
-                self.page.file_path,
-                count + 1,
-                function_name,
-                line
+                file=self.page.file_path,
+                line=count + 1,
+                rule=function_name,
+                code=line
             ))
 
     def log_error_message(self, function_name: str, message: str):
         self.error_logs.append(
             self.log_template.format(
-                self.page.file_path,
-                "None",
-                function_name,
-                message
+                file=self.page.file_path,
+                line="None",
+                rule=function_name,
+                code=message
             ))
 
 # 註解
@@ -425,6 +429,7 @@ class ServiceImplAnnotationRule(Rule):
         super().__init__(page)
         self.set_assert_rule(self.method_should_add_override_annotation)
         self.set_assert_rule(self.method_should_add_transaction_annotation)
+        self.set_assert_rule(self.method_should_using_restricted_name)
 
     def method_should_add_override_annotation(self):
         '''
@@ -432,9 +437,11 @@ class ServiceImplAnnotationRule(Rule):
         預期每個方法都是用 public 宣告
         '''
         for count, line in enumerate(self.page.file_lines, start=0):
+            if "implements" in line:
+                continue
             if "public" in line:
                 # 前一行或前兩行至少要有 @Override annotation 否則報錯
-                if "@Override" not in self.page.file_lines[count - 1] or "@Override" not in self.page.file_lines[count - 2]:
+                if "@Override" not in self.page.file_lines[count - 1] and "@Override" not in self.page.file_lines[count - 2]:
                     self.log_error_line(
                         count, self.method_should_add_override_annotation.__name__, line)
 
@@ -443,12 +450,36 @@ class ServiceImplAnnotationRule(Rule):
         update insert delete 該要有 @Transaction
         檢查每個方法在定義時前一行或前兩行要有 @Transaction
         '''
+        transactional_method_types = ["update", "insert", "delete"]
         for count, line in enumerate(self.page.file_lines, start=0):
+            if "implements" in line:
+                continue
             if "public" in line:
-                # 前一行或前兩行至少要有 @Override annotation 否則報錯
-                if "@Transaction" not in self.page.file_lines[count - 1] or "@Transaction" not in self.page.file_lines[count - 2]:
-                    self.log_error_line(
-                        count, self.method_should_add_transaction_annotation.__name__, line)
+                for transactional_method_type in transactional_method_types:
+                    if transactional_method_type in line:
+                        # 前一行或前兩行至少要有 @Override annotation 否則報錯
+                        if "@Transaction" not in self.page.file_lines[count - 1] and "@Transaction" not in self.page.file_lines[count - 2]:
+                            self.log_error_line(
+                                count, self.method_should_add_transaction_annotation.__name__, line)
+
+    def method_should_using_restricted_name(self):
+        '''
+        檢查每個方法使用限制的動詞當做名稱 "update", "insert", "delete", "find", "get", "query", "select"
+        '''
+        restrict_method_types = ["update", "insert", "delete", "find", "get", "query", "select"]
+        for count, line in enumerate(self.page.file_lines, start=0):
+            if "implements" in line:
+                continue
+            if "public" in line:
+                using_properly_name = False
+                for restrict_method_type in restrict_method_types:
+                    if restrict_method_type in line:
+                        using_properly_name = True
+                        break
+                if not using_properly_name:
+                    self.log_error_message(
+                        function_name=self.method_should_using_restricted_name.__name__,
+                        message='dao 方法的命名應使用: "find", "get", "query", "select" "update", "insert", "delete"，目前叫做: ' + line)
 
 
 class GenericTypeRule(Rule):
@@ -519,7 +550,7 @@ if __name__ == "__main__":
             self.type = type(self).__name__
             self.file_path = "abc.java"
             self.controller_name = "A01sr0833Controller"
-            print(self.type)  # debug
+            # print(self.type)  # debug
             with open(self.file_path, 'r') as f:  # 測試時永遠以 abc.java 當作對象
                 self.file_lines = f.readlines()
             self.rules = []
