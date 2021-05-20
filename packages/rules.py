@@ -1,4 +1,3 @@
-from utils import *
 from typing import Callable
 from enum import Enum
 import re
@@ -6,6 +5,7 @@ import time
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+from utils import *
 
 
 class Rule():
@@ -118,7 +118,9 @@ class CommentRule(Rule):
 
     def code_comment_should_not_exist(self):
         '''
-        邏輯註解不該留下
+        程式的邏輯註解不該留下，商業邏輯類的說明註解則留下
+        目前只能辨識出有中文的則代表是說明註解
+        其他的則標記出來做人工審查
         '''
         for count, line in enumerate(self.page.file_lines, start=0):
             if "//" not in line:
@@ -198,33 +200,55 @@ class UnderLineRule(Rule):
                 controller_name_with_underline = "".join(tmp_list)
                 if controller_name_with_underline in line:
                     self.log_error_message(
-                        function_name=self.controller_name_should_same_as_do_naming.__name__,
+                        function_name=self.controller_name_should_same_as_do_query_naming.__name__,
                         message="controller 的命名應為: " + controller_name_with_underline + " 目前叫做: " + controller_name)
                     return
         self.log_error_message(
-            function_name=self.controller_name_should_same_as_do_naming.__name__,
+            function_name=self.controller_name_should_same_as_do_query_naming.__name__,
             message="controller 的命名: " + controller_name + " 於 update sql 中不存在，請確認 commit 是否有更新此檔案")
 
+    def requestmapping_name_should_same_as_do_query_naming(self):
+        #TODO
+        pass
+    
+    def jsp_directory_name_should_same_as_do_query_naming(self):
+        #TODO
+        pass
 
-# class LegacyDirectoryPathRule(Rule):
-#     """
-#     - 遷移到 legacy 內的原系統程式碼，應以新系統內之legacy為根目錄之後按照原系統的 package 來擺放
-#     - 例如新系統的 `/FCM/src/main/java/com/mitake/infra/repository/app/service/legacy`
-#     - 裡面要放置原系統內的 `/src/com/taifex/r2/web/m03`
-#     - 遷移後的路徑會是 `/FCM/src/main/java/com/mitake/infra/repository/app/service/legacy/src/com/taifex/r2/web/m03`
-#     """
+    def js_directory_name_should_same_as_do_query_naming(self):
+        #TODO
+        pass
+    
 
-    # def __init__(self, page):
-    #     super().__init__(page)
-    #     self.set_assert_rule(self.todo)
+class LegacyDirectoryPathRule(Rule):
+    """
+    - 遷移到 legacy 內的原系統程式碼，應以新系統內之legacy為根目錄之後按照原系統的 package 來擺放
+    - 例如新系統的 `/FCM/src/main/java/com/mitake/infra/repository/app/service/legacy`
+    - 裡面要放置原系統內的 `/src/com/taifex/r2/web/m03`
+    - 遷移後的路徑會是 `/FCM/src/main/java/com/mitake/infra/repository/app/service/legacy/src/com/taifex/r2/web/m03`
+    """
 
-    # def todo(self):
-    #     '''
-    #     todo
-    #     '''
-    #     for count, line in enumerate(self.page.file_lines, start=0):
-    #         self.log_error_line(
-    #             count, self.todo.__name__, line)
+    def __init__(self, page):
+        super().__init__(page)
+        self.set_assert_rule(self.legacy_file_name_and_path_should_be_same_as_old_project)
+
+    def legacy_file_name_and_path_should_be_same_as_old_project(self):
+        '''
+        todo
+        '''
+        for count, line in enumerate(self.page.file_lines, start=0):
+            if "import" not in line:
+                continue
+            package_name = line.split(" ")[1]
+            if "legacy" in package_name:
+                if "MultipartDispatch" in line:
+                    continue
+                # +7 是代表從 legacy 之後開始，-1 則是為了要避免擷取到看不到的換行符號
+                old_file_path = package_name[package_name.index("legacy")+7:-1].replace(".", "/").replace(";", ".java")
+                old_file_path = get_old_project_file_path(old_file_path)
+                if not os.path.isfile(old_file_path):
+                    self.log_error_line(
+                        count, self.legacy_file_name_and_path_should_be_same_as_old_project.__name__, line)
 
 # # 程式碼
 
@@ -297,7 +321,7 @@ class ServiceImplAnnotationRule(Rule):
         '''
         for count, line in enumerate(self.page.file_lines, start=0):
             self.log_error_line(
-                count, self.todo.__name__, line)
+                count, self.method_should_add_override_annotation.__name__, line)
 
     def method_should_add_transaction_annotation(self):
         '''
@@ -306,7 +330,7 @@ class ServiceImplAnnotationRule(Rule):
         '''
         for count, line in enumerate(self.page.file_lines, start=0):
             self.log_error_line(
-                count, self.todo.__name__, line)
+                count, self.method_should_add_transaction_annotation.__name__, line)
 
 
 class GenericTypeRule(Rule):
@@ -316,7 +340,7 @@ class GenericTypeRule(Rule):
 
     def __init__(self, page):
         super().__init__(page)
-        self.set_assert_rule(self.should_not_using_generic_type_in_return)
+        self.set_assert_rule(self.should_not_using_generic_type)
 
     def should_not_using_generic_type(self):
         '''
@@ -373,10 +397,10 @@ if __name__ == "__main__":
 
         def __init__(self):
             self.type = type(self).__name__
-            self.file_path = "abc.txt"
+            self.file_path = "abc.java"
             self.controller_name = "M022388Controller"
             print(self.type)  # debug
-            with open(self.file_path, 'r') as f:  # 測試時永遠以 abc.txt 當作對象
+            with open(self.file_path, 'r') as f:  # 測試時永遠以 abc.java 當作對象
                 self.file_lines = f.readlines()
             self.rules = []
             self.sql_file_path = get_sql_file_path()
@@ -390,10 +414,11 @@ if __name__ == "__main__":
             for rule in self.rules:
                 rule.do_rule_check()
     page = TestPage()
+    LegacyDirectoryPathRule(page).do_rule_check()
     UnderLineRule(page).do_rule_check()
-    # RequestMethodRule(page).do_rule_check()
-    # IfElseRule(page).do_rule_check()
-    # GenericTypeRule(page).do_rule_check()
-    # MethodNameRule(page).do_rule_check()
-    # JavaDocRule(page).do_rule_check()
-    # CommentRule(page).do_rule_check()
+    RequestMethodRule(page).do_rule_check()
+    IfElseRule(page).do_rule_check()
+    GenericTypeRule(page).do_rule_check()
+    MethodNameRule(page).do_rule_check()
+    CommentRule(page).do_rule_check()
+    # JavaDocRule(page).do_rule_check()  # 這個要獨立測試

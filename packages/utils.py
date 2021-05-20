@@ -6,6 +6,7 @@ with open('config.yaml', 'r', encoding='utf-8') as stream:
     config = yaml.safe_load(stream)
 
 PROJECT_ROOT_PATH = config.get('project_root_path')
+OLD_PROJECT_ROOT_PATH = config.get('old_project_root_path')
 SERVICE_DIRECTORY_PATH = config.get('service_directory_path')
 CONTROLLER_DIRECTORY_PATH = config.get('controller_directory_path')
 SQL_DIRECTORY_PATH = config.get('sql_directory_path')
@@ -42,7 +43,11 @@ def get_sql_file_path() -> str:
             root=PROJECT_ROOT_PATH,
             sql_directory_path=SQL_DIRECTORY_PATH)
 
+def get_old_project_file_path(file_path: str) -> str:
+    return OLD_PROJECT_ROOT_PATH + "/" + file_path
+
+
 if __name__ == "__main__":
     assert get_service_file_paths(["a", "b"]) == ["/Users/cloud.chen/code/taifex-fdms-cms/src/main/java/com/mitake/infra/repository/app/service/a.java",
                                                  "/Users/cloud.chen/code/taifex-fdms-cms/src/main/java/com/mitake/infra/repository/app/service/b.java"]
-    assert get_service_names("abc.txt") == ["S1304Service"]
+    assert get_service_names("abc.java") == ["S1304Service"]

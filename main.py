@@ -7,7 +7,7 @@ class main():
         controller_name = input("input controller file path: ")
         controller_name = controller_name[:-5] if ".java" in controller_name else controller_name
         controller_file_path = get_controller_file_path(controller_name)
-        # controller_file_path = "abc.txt"  # debug
+        # controller_file_path = "abc.java"  # debug
         service_names = get_service_names(controller_file_path)
         service_file_paths = get_service_file_paths(service_names)
         ControllerPage(file_path=controller_file_path, controller_name=controller_name).check_all_rules()
