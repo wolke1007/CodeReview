@@ -176,6 +176,8 @@ class UnderLineRule(Rule):
     def __init__(self, page):
         super().__init__(page)
         self.set_assert_rule(self.controller_name_should_same_as_do_query_naming)
+        self.set_assert_rule(self.requestmapping_name_should_same_as_do_query_naming)
+
 
     def controller_name_should_same_as_do_query_naming(self):
         '''
@@ -194,22 +196,47 @@ class UnderLineRule(Rule):
             if "_" in controller_name:
                 continue  # 如果原來就已經有底線就不用猜測了，如果找完整個檔案都沒有就是沒有
             # 在所有位置加上底線試試看，如果有則回報答案
-            for index in range(1, len(controller_name)):
-                tmp_list = list(controller_name)
-                tmp_list.insert(index, "_")
-                controller_name_with_underline = "".join(tmp_list)
-                if controller_name_with_underline in line:
-                    self.log_error_message(
+            find_guess_name = self._guess_name_with_underline_(line, controller_name)
+            # 不一樣代表有找到
+            if controller_name != find_guess_name:
+                self.log_error_message(
                         function_name=self.controller_name_should_same_as_do_query_naming.__name__,
-                        message="controller 的命名應為: " + controller_name_with_underline + " 目前叫做: " + controller_name)
-                    return
+                        message="controller 的命名應為: " + find_guess_name + " 目前叫做: " + controller_name)
+                return
         self.log_error_message(
             function_name=self.controller_name_should_same_as_do_query_naming.__name__,
             message="controller 的命名: " + controller_name + " 於 update sql 中不存在，請確認 commit 是否有更新此檔案")
 
     def requestmapping_name_should_same_as_do_query_naming(self):
-        #TODO
-        pass
+        '''
+        若 do action 的 query 原來有底線
+        則 RequestMapping 則也需要有底線
+        例：
+            do action:  a01sr08_33
+            RequestMapping: @RequestMapping("/a01sr08_33")
+        '''
+        request_name = ""
+        for line in self.page.file_lines:
+            if "@RequestMapping" not in line:
+                continue
+            match = re.search(r'/\w*', line)
+            if match is not None:
+                request_name = match.group()[1:]
+                for line in self.page.sql_file_lines:
+                    if request_name in line:
+                        return # 用原來的名字就找到了
+                    if "_" in request_name:
+                        continue
+                        # 如果原來就已經有底線就不用猜測了，如果找完整個檔案都沒有就是沒有
+                    find_guess_name = self._guess_name_with_underline_(line, request_name)
+                    # 不一樣代表有找到
+                    if request_name != find_guess_name:
+                        self.log_error_message(
+                            function_name=self.requestmapping_name_should_same_as_do_query_naming.__name__,
+                            message="request 的命名應為: " + find_guess_name + " 目前叫做: " + request_name)
+        self.log_error_message(
+            function_name=self.requestmapping_name_should_same_as_do_query_naming.__name__,
+            message="request 的命名: " + request_name + " 於 update sql 中不存在，請確認 commit 是否有更新此檔案")
     
     def jsp_directory_name_should_same_as_do_query_naming(self):
         #TODO
@@ -218,6 +245,19 @@ class UnderLineRule(Rule):
     def js_directory_name_should_same_as_do_query_naming(self):
         #TODO
         pass
+            
+    def _guess_name_with_underline_(self, line: str, name: str) -> str:
+        '''
+        在所有位置加上底線試試看，如果有則回報答案
+        '''
+        name = name.lower()
+        for index in range(len(name), 0, -1):
+            tmp_list = list(name)
+            tmp_list.insert(index, "_")
+            controller_name_with_underline = "".join(tmp_list)
+            if controller_name_with_underline in line:
+                return controller_name_with_underline
+        return name
     
 
 class LegacyDirectoryPathRule(Rule):
@@ -398,7 +438,7 @@ if __name__ == "__main__":
         def __init__(self):
             self.type = type(self).__name__
             self.file_path = "abc.java"
-            self.controller_name = "M022388Controller"
+            self.controller_name = "A01sr08_33Controller"
             print(self.type)  # debug
             with open(self.file_path, 'r') as f:  # 測試時永遠以 abc.java 當作對象
                 self.file_lines = f.readlines()
@@ -414,11 +454,11 @@ if __name__ == "__main__":
             for rule in self.rules:
                 rule.do_rule_check()
     page = TestPage()
-    LegacyDirectoryPathRule(page).do_rule_check()
+    # LegacyDirectoryPathRule(page).do_rule_check()
     UnderLineRule(page).do_rule_check()
-    RequestMethodRule(page).do_rule_check()
-    IfElseRule(page).do_rule_check()
-    GenericTypeRule(page).do_rule_check()
-    MethodNameRule(page).do_rule_check()
-    CommentRule(page).do_rule_check()
+    # RequestMethodRule(page).do_rule_check()
+    # IfElseRule(page).do_rule_check()
+    # GenericTypeRule(page).do_rule_check()
+    # MethodNameRule(page).do_rule_check()
+    # CommentRule(page).do_rule_check()
     # JavaDocRule(page).do_rule_check()  # 這個要獨立測試
