@@ -1,6 +1,7 @@
 project_root_path : /Users/cloud.chen/code/taifex-fdms-cms
 old_project_root_path : /Users/cloud.chen/code/taifex-fdms-old/FMS
 service_directory_path : /src/main/java/com/mitake/infra/repository/app/service
+serviceimpl_directory_path : /src/main/java/com/mitake/infra/repository/app/service/impl
 controller_directory_path : /src/main/java/com/mitake/controller
 sql_directory_path : /db/phase-1-data.sql
 jsp_directory_path : /src/main/webapp/WEB-INF/jsp/

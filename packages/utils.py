@@ -8,6 +8,7 @@ with open('config.yaml', 'r', encoding='utf-8') as stream:
 PROJECT_ROOT_PATH = config.get('project_root_path')
 OLD_PROJECT_ROOT_PATH = config.get('old_project_root_path')
 SERVICE_DIRECTORY_PATH = config.get('service_directory_path')
+SERVICEIMPL_DIRECTORY_PATH = config.get('serviceimpl_directory_path')
 CONTROLLER_DIRECTORY_PATH = config.get('controller_directory_path')
 SQL_DIRECTORY_PATH = config.get('sql_directory_path')
 JSP_DIRETORY_PATH = config.get('jsp_directory_path')
@@ -30,6 +31,16 @@ def get_service_file_paths(service_names: list) -> list:
             root=PROJECT_ROOT_PATH,
             service_dir_path=SERVICE_DIRECTORY_PATH,
             service_name=service_name,
+            file_extension="java"))
+    return paths
+
+def get_serviceimpl_file_paths(service_names: list) -> list:
+    paths = []
+    for service_name in service_names:
+        paths.append("{root}{serviceimpl_dir_path}/{service_name}.{file_extension}".format(
+            root=PROJECT_ROOT_PATH,
+            serviceimpl_dir_path=SERVICEIMPL_DIRECTORY_PATH,
+            serviceimpl_name=service_name + "Impl",
             file_extension="java"))
     return paths
 
