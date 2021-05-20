@@ -175,9 +175,9 @@ class UnderLineRule(Rule):
 
     def __init__(self, page):
         super().__init__(page)
-        # self.set_assert_rule(self.controller_name_should_same_as_do_query_naming)
-        # self.set_assert_rule(self.requestmapping_name_should_same_as_do_query_naming)
-        # self.set_assert_rule(self.jsp_directory_name_should_same_as_do_query_naming)
+        self.set_assert_rule(self.controller_name_should_same_as_do_query_naming)
+        self.set_assert_rule(self.requestmapping_name_should_same_as_do_query_naming)
+        self.set_assert_rule(self.jsp_directory_name_should_same_as_do_query_naming)
         self.set_assert_rule(self.js_directory_name_should_same_as_do_query_naming)
 
     def controller_name_should_same_as_do_query_naming(self) -> bool:
