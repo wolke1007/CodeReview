@@ -4,6 +4,8 @@ from packages.utils import *
 
 class main():
     def run(self):
+        with open("log.txt", 'w') as f:
+            f.writelines([])
         controller_name = input("input controller file path: ")
         controller_name = controller_name[:-5] if ".java" in controller_name else controller_name
         controller_file_path = get_controller_file_path(controller_name)
