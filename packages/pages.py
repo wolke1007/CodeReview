@@ -47,11 +47,12 @@ class ControllerPage(Page):
         with open(self.sql_file_path, 'r') as f:
             self.sql_file_lines = f.readlines()
 
-# TODO 加上 JavaDocRule
+
 class DaoPage(Page):
     def __init__(self, file_path: str, controller_name: str):
         super().__init__(file_path= file_path, controller_name= controller_name)
-        self.set_rules([CommentRule(self),
+        self.set_rules([JavaDocRule(self),
+                        CommentRule(self),
                         IfElseRule(self),
                         GenericTypeRule(self),
                         MethodNameRule(self)

@@ -65,7 +65,6 @@ class Rule():
 
 # 註解
 
-# TODO 需實作連 Dao 也可以用的版本
 class JavaDocRule(Rule):
     """
     - JavaDoc註解是否有寫
@@ -95,20 +94,23 @@ class JavaDocRule(Rule):
         '''
         檢查 JavaDoc 註解是否有寫
         '''
-        end_of_comment = False
+        # FIXME 這邊先 hardcode 寫死判斷依據，等有好想法再來改寫
+        # 可能出現的bug是，如果回傳型態不在清單裡面的話則會判斷不到
+        return_types = ["List<Map<String, Object>>",
+                        "int", "boolean",
+                        "List<List<Map<String, Object>>>",
+                        "Map<String, Object>",
+                        "String"]
         for count, line in enumerate(self.page.file_lines, start=0):
-            if "import" in line or "package" in line:
-                continue
-            if "*/" in line:
-                end_of_comment = True
-            if ";" in line and not end_of_comment:
-                self.log_error_line(
-                    count, self.java_doc_should_exist.__name__, line,
-                    "目前 java doc 的規範為 : Interface Service 內的方法說明以及 Dao 內的方法需寫上 java doc")
-                end_of_comment = False
-                continue
-            if ";" in line and end_of_comment:
-                end_of_comment = False
+            for return_type in return_types:
+                pattern = return_type + r'\s\w*\('
+                match = re.search(pattern, line)
+                if match:
+                    print(match.group())
+                    if "*/" not in self.page.file_lines[count - 1] and "*/" not in self.page.file_lines[count - 2]:
+                        self.log_error_line(
+                            count, self.java_doc_should_exist.__name__, line,
+                            "目前 java doc 的規範為 : Interface Service 內的方法說明以及 Dao 內的方法需寫上 java doc")
 
     # TODO 註解格式是否正確
     # TODO 註解參數是否正確
