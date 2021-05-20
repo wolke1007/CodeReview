@@ -65,7 +65,7 @@ class Rule():
 
 # 註解
 
-
+# TODO 需實作連 Dao 也可以用的版本
 class JavaDocRule(Rule):
     """
     - JavaDoc註解是否有寫
