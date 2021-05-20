@@ -429,10 +429,14 @@ class ServiceImplAnnotationRule(Rule):
     def method_should_add_override_annotation(self):
         '''
         檢查每個方法在定義時前面一行要有 @Override
+        預期每個方法都是用 public 宣告
         '''
         for count, line in enumerate(self.page.file_lines, start=0):
-            self.log_error_line(
-                count, self.method_should_add_override_annotation.__name__, line)
+            if "public" in line:
+                # 前一行或前兩行至少要有 @Override annotation 否則報錯
+                if "@Override" not in self.page.file_lines[count - 1] or "@Override" not in self.page.file_lines[count - 2]:
+                    self.log_error_line(
+                        count, self.method_should_add_override_annotation.__name__, line)
 
     def method_should_add_transaction_annotation(self):
         '''
@@ -440,8 +444,11 @@ class ServiceImplAnnotationRule(Rule):
         檢查每個方法在定義時前一行或前兩行要有 @Transaction
         '''
         for count, line in enumerate(self.page.file_lines, start=0):
-            self.log_error_line(
-                count, self.method_should_add_transaction_annotation.__name__, line)
+            if "public" in line:
+                # 前一行或前兩行至少要有 @Override annotation 否則報錯
+                if "@Transaction" not in self.page.file_lines[count - 1] or "@Transaction" not in self.page.file_lines[count - 2]:
+                    self.log_error_line(
+                        count, self.method_should_add_transaction_annotation.__name__, line)
 
 
 class GenericTypeRule(Rule):
