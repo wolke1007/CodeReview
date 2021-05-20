@@ -308,7 +308,7 @@ class UnderLineRule(Rule):
             self.log_error_message(
                 function_name=self.jsp_directory_name_should_same_as_do_query_naming.__name__,
                 message=message,
-            recommend=message)
+                recommend=message)
             return
         full_jsp_diretory_path = get_jsp_diretory_path() + jsp_dir_name
         if not os.path.isdir(full_jsp_diretory_path):
@@ -346,7 +346,7 @@ class UnderLineRule(Rule):
             self.log_error_message(
                 function_name=self.js_directory_name_should_same_as_do_query_naming.__name__,
                 message=message,
-            recommend=message)
+                recommend=message)
             return
         full_js_diretory_path = get_js_diretory_path() + js_dir_name
         if not os.path.isdir(full_js_diretory_path):
@@ -356,7 +356,7 @@ class UnderLineRule(Rule):
             self.log_error_message(
                 function_name=self.js_directory_name_should_same_as_do_query_naming.__name__,
                 message=message,
-            recommend=message)
+                recommend=message)
             return
 
     def _guess_name_with_underline_(self, line: str, name: str) -> str:
