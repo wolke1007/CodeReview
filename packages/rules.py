@@ -190,14 +190,14 @@ class IfElseRule(Rule):
             if ("\tif (" in line or
                 " if (" in line or
                 "\tif(" in line or
-                    " if(" in line) and "{" not in line:
+                    " if(" in line) and "{" not in line and "{" not in self.page.file_lines[count + 1]:
                 self._log_error_line(
                     count, self.if_statement_should_with_bracket_mark.__name__, line,
                     recommend='不要有單行if, for statment')
             if ("\tfor (" in line or
                 " for (" in line or
                 "\tfor(" in line or
-                    " for(" in line) and "{" not in line:
+                    " for(" in line) and "{" not in line and "{" not in self.page.file_lines[count + 1]:
                 self._log_error_line(
                     count, self.if_statement_should_with_bracket_mark.__name__, line,
                     recommend='不要有單行if, for statment')
