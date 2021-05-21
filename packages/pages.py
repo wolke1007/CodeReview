@@ -62,7 +62,7 @@ class DaoPage(Page):
                         CommentRule(self).set_all_rules_to_check(),
                         IfElseRule(self).set_all_rules_to_check(),
                         GenericTypeRule(self).set_all_rules_to_check(),
-                        MethodNameRule(self).set_assert_rule("method_name_initial_should_not_be_capital")
+                        MethodNameRule(self).set_assert_rule("method_name_defination_initial_should_not_be_capital")
                         ])
         self.sql_file_path = get_sql_file_path()
         with open(self.sql_file_path, 'r') as f:
