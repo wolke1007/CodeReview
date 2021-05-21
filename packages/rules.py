@@ -588,12 +588,17 @@ class MethodNameRule(Rule):
         搜尋所有定義方法的命名部分 {blank}method_name( 用這樣的 pattern 下去找
         '''
         for count, line in enumerate(self.page.file_lines, start=0):
-            if re.search(r'\w\.\w', line):
-                continue  # 表示是 method_name_initial_should_not_be_capital 的情況，跳過
+            # if re.search(r'\w\.\w', line):
+                # continue  # 表示是 method_name_initial_should_not_be_capital 的情況，跳過
             if " new " in line:
                 continue  # return new ModelAndView(INDEX_VIEW) 的情況
-            method_name = re.search(r'\s\w*\(', line)
-            if method_name is not None and method_name.group()[1].isupper():
+            public_method = re.search(r'public\s\w*\s\w*\(', line)
+            public_method_name_is_upper = None if public_method is None else public_method.group().split(" ")[-1][0].isupper()
+            private_method = re.search(r'private\s\w*\s\w*\(', line)
+            private_method_name_is_upper = None if private_method is None else private_method.group().split(" ")[-1][0].isupper()
+            proteted_method = re.search(r'protected\s\w*\s\w*\(', line)
+            proteted_method_name_is_upper = None if proteted_method is None else proteted_method.group().split(" ")[-1][0].isupper()
+            if public_method_name_is_upper or private_method_name_is_upper or proteted_method_name_is_upper:
                 self.log_error_line(
                     count, self.method_name_defination_initial_should_not_be_capital.__name__, line,
                     recommend='方法名稱不要大寫開頭')
