@@ -452,7 +452,8 @@ class RequestMethodRule(Rule):
                     request_post = True
                 if request_get and request_post:
                     self.log_error_line(
-                        count, self.should_not_allow_both_get_and_post_method.__name__, line)
+                        count, self.should_not_allow_both_get_and_post_method.__name__, line, 
+                        recommend="目前撰寫規範不允許同時有 RequestMethod.GET 與 RequestMethod.POST，除非有特殊需求還請提出解釋")
                 if ")" in line:
                     new_method = False
                     request_get = False
@@ -548,7 +549,8 @@ class GenericTypeRule(Rule):
             angle_bracket = re.search(r'<.*>', line)
             if angle_bracket is not None and "?" in angle_bracket.group():
                 self.log_error_line(
-                    count, self.should_not_using_generic_type.__name__, line)
+                    count, self.should_not_using_generic_type.__name__, line,
+                    recommend="目前撰寫規範為若已知回傳型態，則不允許使用 ? 這種泛型回傳型態")
 
 
 class MethodNameRule(Rule):
@@ -616,11 +618,13 @@ if __name__ == "__main__":
             for rule in self.rules:
                 rule.do_rule_check()
     page = TestPage()
-    # LegacyDirectoryPathRule(page).do_rule_check()
+    with open("log.txt", 'w') as f:
+        f.writelines([])
+    LegacyDirectoryPathRule(page).do_rule_check()
     UnderLineRule(page).do_rule_check()
-    # RequestMethodRule(page).do_rule_check()
-    # IfElseRule(page).do_rule_check()
-    # GenericTypeRule(page).do_rule_check()
-    # MethodNameRule(page).do_rule_check()
-    # CommentRule(page).do_rule_check()
+    RequestMethodRule(page).do_rule_check()
+    IfElseRule(page).do_rule_check()
+    GenericTypeRule(page).do_rule_check()
+    MethodNameRule(page).do_rule_check()
+    CommentRule(page).do_rule_check()
     # JavaDocRule(page).do_rule_check()  # 這個要獨立測試
