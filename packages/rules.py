@@ -134,6 +134,9 @@ class CommentRule(Rule):
         其他的則標記出來做人工審查
         '''
         for count, line in enumerate(self.page.file_lines, start=0):
+            # 這兩個檔案不做驗證，裡面龍蛇混雜不好自動化處理
+            if "NativeQueryDao" in line or "NativeQueryDao2" in line:
+                break
             if "//" not in line:
                 continue
             chinese_in_line = False
@@ -569,6 +572,9 @@ class MethodNameRule(Rule):
         搜尋所有 xxx.xxx 的 pattern 並把 . 後面的部分當作 method name 做檢查
         '''
         for count, line in enumerate(self.page.file_lines, start=0):
+            # 這兩個檔案不做驗證，因為裡面有 SQL 語法存在
+            if "NativeQueryDao" in line or "NativeQueryDao2" in line:
+                break
             if "RequestMethod.GET" in line or "RequestMethod.POST" in line:
                 continue
             method_name = re.search(r'\w\.\w', line)
