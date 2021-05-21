@@ -15,9 +15,8 @@ class Rule():
         self.assert_logics = []
         self.page = page
         # 需要印出來的 log 全部 append 在這個 list 裡面並在 do_rule_check 最後一次一起印
-        self.error_logs = ["=== {name} {time}=== \n".format(
-            name=self.page.file_path,
-            time=time.strftime("%Y-%m-%d %X", time.localtime()))]
+        self.error_logs = ["=== {name} {rule} === \n".format(
+            name=self.page.file_path.split("/")[-1], rule=self.__class__.__name__)]
         self.log_path = "./log.txt"
         self.log_template = ("------------------------------------------------------\n"
                              "violate rule: \"{rule}\"\n"
@@ -46,7 +45,7 @@ class Rule():
     def log_error_line(self, count: int, function_name: str, line: str, recommend: str):
         self.error_logs.append(
             self.log_template.format(
-                file=self.page.file_path,
+                file=self.page.file_path.split("/")[-1],
                 line=count + 1,
                 rule=function_name,
                 code=line,
@@ -56,7 +55,7 @@ class Rule():
     def log_error_message(self, function_name: str, message: str, recommend: str):
         self.error_logs.append(
             self.log_template.format(
-                file=self.page.file_path,
+                file=self.page.file_path.split("/")[-1],
                 line="None",
                 rule=function_name,
                 code=message,
