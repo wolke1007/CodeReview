@@ -156,7 +156,11 @@ class CommentRule(Rule):
                     continue
                 if u'\u4e00' <= ch <= u'\u9fff':
                     chinese_in_line = True  # 有註解，且有中文，判斷為說明邏輯
-            if not chinese_in_line:
+            code_pattern1 = '.*//.*\(.*\)'
+            code_pattern2 = '.*//.*\=.*'
+            match_parentheses = re.search(code_pattern1, line)
+            match_equal_mark = re.search(code_pattern2, line)
+            if not chinese_in_line and (match_parentheses or match_equal_mark):
                 self._log_error_line(
                     count, self.code_comment_should_not_exist.__name__, line,
                     '程式的 "邏輯註解" 不該留下，商業邏輯類的 "說明註解" 則留下以利後續程式維護')
