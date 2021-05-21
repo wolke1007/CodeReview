@@ -181,6 +181,9 @@ class IfElseRule(Rule):
         搜尋 if 關鍵字，檢查是否同時有 { 跟在後面
         '''
         for count, line in enumerate(self.page.file_lines, start=0):
+            # 這兩個檔案不做驗證，因為裡面龍蛇混雜
+            if "NativeQueryDao" in line or "NativeQueryDao2" in line:
+                break
             if ("\tif (" in line or
                 " if (" in line or
                 "\tif(" in line or
