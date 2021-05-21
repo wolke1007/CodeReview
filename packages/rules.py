@@ -576,8 +576,18 @@ class MethodNameRule(Rule):
                 break
             if "RequestMethod.GET" in line or "RequestMethod.POST" in line:
                 continue
-            method_name = re.search(r'\w\.\w', line)
-            if method_name is not None and method_name.group()[-1].isupper():
+            if "package " in line or "import " in line:
+                continue
+            method_name = re.search(r'\w\.\w*', line)
+            # 若整個是大寫，有可能是 BigDecimal.ZERO 的 ZERO 這種情境
+            method_name_all_isupper = True
+            if method_name is not None:
+                print(method_name.group())
+                for char in method_name.group()[2:]:
+                    if char.islower():
+                        method_name_all_isupper = False
+                        break
+            if method_name is not None and method_name.group()[2].isupper() and not method_name_all_isupper :
                 self._log_error_line(
                     count, self.method_name_initial_should_not_be_capital.__name__, line,
                     recommend='方法名稱不要大寫開頭')
