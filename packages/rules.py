@@ -31,7 +31,7 @@ class Rule(abc.ABC):
         method_names = [method_name for method_name in dir(self)
                         if callable(getattr(self, method_name)) and "__" not in method_name and method_name[0] != "_" and "rule" not in method_name]
         for method_name in method_names:
-            self.set_assert_rule(getattr(self, method_name))
+            self.set_assert_rule(method_name)
         return self
 
     def do_rule_check(self):
@@ -39,8 +39,8 @@ class Rule(abc.ABC):
         # collect all error messages, then log into file
         self.__log_error_line()
 
-    def set_assert_rule(self, assert_rule: Callable):
-        self.assert_logics.append(assert_rule)
+    def set_assert_rule(self, assert_rule_name: str):
+        self.assert_logics.append(getattr(self, assert_rule_name))
         return self
 
     def __check_with_assert_rule(self):
