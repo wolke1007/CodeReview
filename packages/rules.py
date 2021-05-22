@@ -61,11 +61,11 @@ class Rule(abc.ABC):
                 recommend=recommend
             ))
 
-    def _log_error_message(self, function_name: str, message: str, recommend: str):
+    def _log_error_message(self, function_name: str, message: str, recommend: str, line="None"):
         self.error_logs.append(
             self.log_template.format(
                 file=self.page.file_path.split("/")[-1],
-                line="None",
+                line=line,
                 rule=function_name,
                 code=message,
                 recommend=recommend
@@ -522,8 +522,10 @@ class ServiceImplAnnotationRule(Rule):
         '''
         restrict_method_types = ["update", "insert",
                                  "delete", "find", "get", "query", "select"]
-        for count, line in enumerate(self.page.file_lines, start=0):
-            if "implements" in line:
+        for count, line in enumerate(self.page.file_lines, start=1):
+            if "NativeQueryDao" in line or "NativeQueryDao2" in line:
+                break
+            if "implements" in line or "extends" in line:
                 continue
             if "public" in line:
                 using_properly_name = False
@@ -534,7 +536,9 @@ class ServiceImplAnnotationRule(Rule):
                 if not using_properly_name:
                     self._log_error_message(
                         function_name=self.method_should_using_restricted_name.__name__,
-                        message='dao 方法的命名應使用: "find", "get", "query", "select" "update", "insert", "delete"，目前叫做: ' + line,
+                        line=count,
+                        message=('\ndao 方法的命名應使用: "find", "get", "query", "select" "update", "insert", "delete"\n'
+                                    '目前叫做: '+ line),
                         recommend='dao 方法的命名應使用: "find", "get", "query", "select" "update", "insert", "delete"')
 
 
@@ -582,7 +586,6 @@ class MethodNameRule(Rule):
             # 若整個是大寫，有可能是 BigDecimal.ZERO 的 ZERO 這種情境
             method_name_all_isupper = True
             if method_name is not None:
-                print(method_name.group())
                 for char in method_name.group()[2:]:
                     if char.islower():
                         method_name_all_isupper = False
