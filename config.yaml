@@ -7,3 +7,4 @@ dao_directory_path : /src/main/java/com/mitake/infra/repository/app/dao
 sql_directory_path : /db/phase-1-data.sql
 jsp_directory_path : /src/main/webapp/WEB-INF/jsp/
 js_directory_path : /src/main/resources/static/js/
+csv_file_path : ./function_number.csv

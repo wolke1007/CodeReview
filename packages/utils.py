@@ -1,5 +1,6 @@
 import yaml
 import re
+import pandas as pd
 
 
 with open('config.yaml', 'r', encoding='utf-8') as stream:
@@ -14,6 +15,7 @@ DAO_DIRETORY_PATH = config.get('dao_directory_path')
 SQL_DIRECTORY_PATH = config.get('sql_directory_path')
 JSP_DIRETORY_PATH = config.get('jsp_directory_path')
 JS_DIRETORY_PATH = config.get('js_directory_path')
+CSV_FILE_PATH = config.get('csv_file_path')
 
 
 def get_service_names(controller_file_path: str) -> list:
@@ -97,7 +99,19 @@ def get_dao_file_paths(dao_names: list) -> list:
     return dao_file_paths
 
 
+def get_function_number(controller_name: str) -> str:
+    '''
+    回傳 010200 這種格式的 function number
+    '''
+    df = pd.read_csv(CSV_FILE_PATH)
+    pattern = (df["Function Name"] == controller_name.lower())
+    function_number = str(int(df[pattern]["Function Number"].values[0]))
+    if len(function_number) < 6:
+        return "0"+function_number
+    return function_number
+
 if __name__ == "__main__":
     assert get_service_file_paths(["a", "b"]) == ["/Users/cloud.chen/code/taifex-fdms-cms/src/main/java/com/mitake/infra/repository/app/service/a.java",
                                                   "/Users/cloud.chen/code/taifex-fdms-cms/src/main/java/com/mitake/infra/repository/app/service/b.java"]
     assert get_service_names("abc.java") == ["S1304Service"]
+    assert get_function_number("a01sz05") == "010200"
