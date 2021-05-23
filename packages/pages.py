@@ -1,4 +1,5 @@
-import os, sys; 
+import os, sys
+from packages.utils import get_function_number, get_jsp_file_paths, log_message; 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from rules import *
 from utils import *
@@ -82,6 +83,19 @@ class ServiceImplPage(Page):
                         GenericTypeRule(self).set_all_rules_to_check(),
                         MethodNameRule(self).set_all_rules_to_check()
                         ])
+
+class JspPage(Page):
+    def __init__(self, file_path: str, controller_name: str):
+        super().__init__(file_path=file_path, controller_name=controller_name)
+        self.function_number = get_function_number(function_name=controller_name[:-10])
+        if not self.function_number:
+            log_message("=== JspPage ===\n"
+                        "------------------------------------------------------\n"
+                        "function number not found in csv, skip this file\n"
+                        +file_path+"\n"
+                        "------------------------------------------------------\n")
+            return
+        self.set_rules([JspRule(self).set_all_rules_to_check()])
 
 
 if __name__ == "__main__":

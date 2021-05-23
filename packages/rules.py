@@ -18,7 +18,7 @@ class Rule(abc.ABC):
         # 需要印出來的 log 全部 append 在這個 list 裡面並在 do_rule_check 最後一次一起印
         self.error_logs = ["=== {name} {rule} === \n".format(
             name=self.page.file_path.split("/")[-1], rule=self.__class__.__name__)]
-        self.log_path = "./log.txt"
+        self.log_path = get_log_path()
         self.log_template = ("------------------------------------------------------\n"
                              "violate rule: \"{rule}\"\n"
                              "line: {line} \n"
@@ -51,20 +51,22 @@ class Rule(abc.ABC):
         with open(self.log_path, 'a') as file:
             file.writelines(self.error_logs)
 
-    def _log_error_line(self, count: int, function_name: str, line: str, recommend: str):
+    def _log_error_line(self, count: int, function_name: str, line: str, recommend: str, file="None"):
+        file_path = file if file != "None" else self.page.file_path.split("/")[-1]
         self.error_logs.append(
             self.log_template.format(
-                file=self.page.file_path.split("/")[-1],
+                file=file_path,
                 line=count + 1,
                 rule=function_name,
                 code=line,
                 recommend=recommend
             ))
 
-    def _log_error_message(self, function_name: str, message: str, recommend: str, line="None"):
+    def _log_error_message(self, function_name: str, message: str, recommend: str, line="None", file="None"):
+        file_path = file if file != "None" else self.page.file_path.split("/")[-1]
         self.error_logs.append(
             self.log_template.format(
-                file=self.page.file_path.split("/")[-1],
+                file=file_path,
                 line=line,
                 rule=function_name,
                 code=message,
@@ -619,6 +621,43 @@ class MethodNameRule(Rule):
                     recommend='方法名稱不要大寫開頭')
 
 
+class JspRule(Rule):
+    """
+    此部分不在 doc 中
+    """
+
+    def __init__(self, page):
+        super().__init__(page)
+
+    def jsp_title_should_using_the_right_function_number(self):
+        '''
+        jsp 頁面的 title 需使用 message 中對應此功能代號的變數
+        例: 
+            <li><s:message code="page.02-02-01" /></li>
+        '''
+        for count, line in enumerate(self.page.file_lines, start=0):
+            if "<li><s:message code=\"page." in line:
+                match = re.search(r'\d*-\d*-\d*', line)
+                if not match:
+                    self._log_error_line(
+                        count, self.jsp_title_should_using_the_right_function_number.__name__, line,
+                        file=self.page.file_path,
+                        recommend='jsp 頁面未正確使用 message 變數(正確為 3 碼功能代碼，例: page.01-02-03)  \n'
+                                  '(註: 若功能超過一個頁面則使用 page.01-02-03.index, page.01-02-03.result 的方式撰寫)')
+                    return
+                function_number_in_jsp = match.group().replace("-", "")
+                if self.page.function_number != function_number_in_jsp:
+                    self._log_error_line(
+                        count, self.jsp_title_should_using_the_right_function_number.__name__, line,
+                        file=self.page.file_path,
+                        recommend='jsp title 使用的功能代碼與此功能不符')
+                    return
+        self._log_error_line(
+            count, self.jsp_title_should_using_the_right_function_number.__name__, line,
+            file=self.page.file_path,
+            recommend='此 jsp 的 title 未使用 message.properties 的對應變數')
+
+
 if __name__ == "__main__":
     class TestPage():
         """
@@ -653,4 +692,5 @@ if __name__ == "__main__":
     GenericTypeRule(page).set_all_rules_to_check().do_rule_check()
     MethodNameRule(page).set_all_rules_to_check().do_rule_check()
     CommentRule(page).set_all_rules_to_check().do_rule_check()
+    JspRule(page).set_all_rules_to_check().do_rule_check()
     # JavaDocRule(page).do_rule_check()  # 這個要獨立測試

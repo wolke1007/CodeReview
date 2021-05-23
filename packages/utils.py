@@ -1,5 +1,6 @@
 import yaml
 import re
+import os
 import pandas as pd
 
 
@@ -16,7 +17,7 @@ SQL_DIRECTORY_PATH = config.get('sql_directory_path')
 JSP_DIRETORY_PATH = config.get('jsp_directory_path')
 JS_DIRETORY_PATH = config.get('js_directory_path')
 CSV_FILE_PATH = config.get('csv_file_path')
-
+LOG_PATH = config.get('log_path')
 
 def get_service_names(controller_file_path: str) -> list:
     with open(controller_file_path, 'r') as file:
@@ -99,19 +100,47 @@ def get_dao_file_paths(dao_names: list) -> list:
     return dao_file_paths
 
 
-def get_function_number(controller_name: str) -> str:
+def get_function_number(function_name: str) -> str:
     '''
     回傳 010200 這種格式的 function number
+    因為有讀取 CSV 所以有效率問題，不建議頻繁使用
     '''
     df = pd.read_csv(CSV_FILE_PATH)
-    pattern = (df["Function Name"] == controller_name.lower())
-    function_number = str(int(df[pattern]["Function Number"].values[0]))
+    pattern = (df["Function Name"] == function_name.lower())
+    try:
+        function_number = str(int(df[pattern]["Function Number"].values[0]))
+    except IndexError:
+        return None
     if len(function_number) < 6:
         return "0"+function_number
     return function_number
+
+
+def get_jsp_file_paths(controller_name: str) -> list:
+    result = []
+    jsp_directory_path = get_jsp_diretory_path()
+    jsp_file_directory_full_path = jsp_directory_path + controller_name[:-10].lower()
+    for _, _, jsp_file_names in os.walk(jsp_file_directory_full_path):
+        jsp_file_full_paths = [ jsp_file_directory_full_path+'/'+file_name for file_name in jsp_file_names]
+        result += jsp_file_full_paths
+    return result
+
+
+def get_log_path():
+    return LOG_PATH
+        
+
+def log_message(message: str):
+    log_message = "{message}".format(message=message)
+    with open(get_log_path(), 'a') as file:
+        file.writelines([log_message])
+
 
 if __name__ == "__main__":
     assert get_service_file_paths(["a", "b"]) == ["/Users/cloud.chen/code/taifex-fdms-cms/src/main/java/com/mitake/infra/repository/app/service/a.java",
                                                   "/Users/cloud.chen/code/taifex-fdms-cms/src/main/java/com/mitake/infra/repository/app/service/b.java"]
     assert get_service_names("abc.java") == ["S1304Service"]
     assert get_function_number("a01sz05") == "010200"
+    assert get_jsp_file_paths("A01sz05Controller") == ['report.jsp', 'index.jsp']
+    assert get_log_path() == "./log.txt"
+    log_message("1234")
