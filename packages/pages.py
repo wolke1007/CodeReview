@@ -4,6 +4,7 @@ sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from rules import *
 from utils import *
 
+
 class Page():
     def __init__(self, file_path: str, controller_name: str):
         self.type = type(self).__name__
@@ -83,6 +84,7 @@ class ServiceImplPage(Page):
                         GenericTypeRule(self).set_all_rules_to_check(),
                         MethodNameRule(self).set_all_rules_to_check()
                         ])
+
 
 class JspPage(Page):
     def __init__(self, file_path: str, controller_name: str):

@@ -1,15 +1,11 @@
 from utils import *
-from typing import Callable
-from enum import Enum
 import re
-import time
 import os
 import sys
-import abc
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 
-class Rule(abc.ABC):
+class Rule():
     def __init__(self, page):
         self.type = type(self).__name__
         # print(self.type)  # debug
