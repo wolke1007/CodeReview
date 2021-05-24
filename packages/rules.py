@@ -632,7 +632,8 @@ class JspRule(Rule):
             <li><s:message code="page.02-02-01" /></li>
         '''
         for count, line in enumerate(self.page.file_lines, start=0):
-            if "<li><s:message code=\"page." in line:
+            match_jsp_code_line = re.search('<li><s\:message\s*code\s*=\s*\"\w*', line)
+            if match_jsp_code_line:
                 match = re.search(r'\d*-\d*-\d*', line)
                 if not match:
                     self._log_error_line(
@@ -642,6 +643,8 @@ class JspRule(Rule):
                                   '(註: 若功能超過一個頁面則使用 page.01-02-03.index, page.01-02-03.result 的方式撰寫)')
                     return
                 function_number_in_jsp = match.group().replace("-", "")
+                if self.page.function_number == function_number_in_jsp:
+                    return
                 if self.page.function_number != function_number_in_jsp:
                     self._log_error_line(
                         count, self.jsp_title_should_using_the_right_function_number.__name__, line,
