@@ -37,7 +37,9 @@ class ServicePage(Page):
                         CommentRule(self).set_all_rules_to_check(),
                         LegacyDirectoryPathRule(self).set_all_rules_to_check(),
                         GenericTypeRule(self).set_all_rules_to_check(),
-                        MethodNameRule(self).set_all_rules_to_check()
+                        MethodNameRule(self).set_assert_rule(
+                            "method_name_initial_should_not_be_capital").set_assert_rule(
+                            "method_name_defination_initial_should_not_be_capital")
                         ])
 
 
@@ -80,7 +82,9 @@ class ServiceImplPage(Page):
                         LegacyDirectoryPathRule(self).set_all_rules_to_check(),
                         AnnotationRule(self).set_all_rules_to_check(),
                         GenericTypeRule(self).set_all_rules_to_check(),
-                        MethodNameRule(self).set_all_rules_to_check()
+                        MethodNameRule(self).set_assert_rule(
+                            "method_name_initial_should_not_be_capital").set_assert_rule(
+                            "method_name_defination_initial_should_not_be_capital")
                         ])
 
 
