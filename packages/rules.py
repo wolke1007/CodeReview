@@ -479,7 +479,7 @@ class RequestMethodRule(Rule):
                     request_post = False
 
 
-class ServiceImplAnnotationRule(Rule):
+class AnnotationRule(Rule):
     """
     - ServiceImpl內的方法，從介面實作的請都記得標上 `@Override`
     - 要是裡面的方法是 insert update delete 需要加上 @Transactional
@@ -525,31 +525,6 @@ class ServiceImplAnnotationRule(Rule):
                             self._log_error_line(
                                 count, self.method_should_add_transaction_annotation.__name__, line,
                                 'update insert delete 該要有 @Transaction')
-
-    def method_should_using_restricted_name(self):
-        '''
-        檢查每個方法使用限制的動詞當做名稱 "update", "insert", "delete", "find", "get", "query", "select"
-        '''
-        restrict_method_types = ["update", "insert",
-                                 "delete", "find", "get", "query", "select"]
-        for count, line in enumerate(self.page.file_lines, start=1):
-            if "NativeQueryDao" in line or "NativeQueryDao2" in line:
-                break
-            if "implements" in line or "extends" in line:
-                continue
-            if "public" in line:
-                using_properly_name = False
-                for restrict_method_type in restrict_method_types:
-                    if restrict_method_type in line:
-                        using_properly_name = True
-                        break
-                if not using_properly_name:
-                    self._log_error_message(
-                        function_name=self.method_should_using_restricted_name.__name__,
-                        line=count,
-                        message=('\ndao 方法的命名應使用: "find", "get", "query", "select" "update", "insert", "delete"\n'
-                                    '目前叫做: '+ line),
-                        recommend='dao 方法的命名應使用: "find", "get", "query", "select" "update", "insert", "delete"')
 
 
 class GenericTypeRule(Rule):
@@ -627,6 +602,31 @@ class MethodNameRule(Rule):
                 self._log_error_line(
                     count, self.method_name_defination_initial_should_not_be_capital.__name__, line,
                     recommend='方法名稱不要大寫開頭')
+    
+    def method_should_using_restricted_name(self):
+        '''
+        檢查每個方法使用限制的動詞當做名稱 "update", "insert", "delete", "find", "get", "query", "select"
+        '''
+        restrict_method_types = ["update", "insert",
+                                 "delete", "find", "get", "query", "select"]
+        for count, line in enumerate(self.page.file_lines, start=1):
+            if "NativeQueryDao" in line or "NativeQueryDao2" in line:
+                break
+            if "implements" in line or "extends" in line:
+                continue
+            if "public" in line:
+                using_properly_name = False
+                for restrict_method_type in restrict_method_types:
+                    if restrict_method_type in line:
+                        using_properly_name = True
+                        break
+                if not using_properly_name:
+                    self._log_error_message(
+                        function_name=self.method_should_using_restricted_name.__name__,
+                        line=count,
+                        message=('\ndao 方法的命名應使用: "find", "get", "query", "select" "update", "insert", "delete"\n'
+                                    '目前叫做: '+ line),
+                        recommend='dao 方法的命名應使用: "find", "get", "query", "select" "update", "insert", "delete"')
 
 
 class JspRule(Rule):

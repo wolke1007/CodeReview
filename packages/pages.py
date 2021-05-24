@@ -50,7 +50,9 @@ class ControllerPage(Page):
                         LegacyDirectoryPathRule(self).set_all_rules_to_check(),
                         RequestMethodRule(self).set_all_rules_to_check(),
                         GenericTypeRule(self).set_all_rules_to_check(),
-                        MethodNameRule(self).set_all_rules_to_check()
+                        MethodNameRule(self).set_assert_rule(
+                            "method_name_initial_should_not_be_capital").set_assert_rule(
+                            "method_name_defination_initial_should_not_be_capital")
                         ])
         self.sql_file_path = get_sql_file_path()
         with open(self.sql_file_path, 'r') as f:
@@ -62,12 +64,9 @@ class DaoPage(Page):
         super().__init__(file_path=file_path, controller_name=controller_name)
         self.set_rules([JavaDocRule(self).set_all_rules_to_check(),
                         CommentRule(self).set_all_rules_to_check(),
-                        ServiceImplAnnotationRule(self).set_assert_rule(
-                            "method_should_using_restricted_name"),
                         IfElseRule(self).set_all_rules_to_check(),
                         GenericTypeRule(self).set_all_rules_to_check(),
-                        MethodNameRule(self).set_assert_rule(
-                            "method_name_defination_initial_should_not_be_capital")
+                        MethodNameRule(self).set_all_rules_to_check()
                         ])
         self.sql_file_path = get_sql_file_path()
         with open(self.sql_file_path, 'r') as f:
@@ -79,8 +78,7 @@ class ServiceImplPage(Page):
         super().__init__(file_path=file_path, controller_name=controller_name)
         self.set_rules([CommentRule(self).set_all_rules_to_check(),
                         LegacyDirectoryPathRule(self).set_all_rules_to_check(),
-                        ServiceImplAnnotationRule(self).set_assert_rule(
-                            "method_should_add_override_annotation").set_assert_rule("method_should_add_transaction_annotation"),
+                        AnnotationRule(self).set_all_rules_to_check(),
                         GenericTypeRule(self).set_all_rules_to_check(),
                         MethodNameRule(self).set_all_rules_to_check()
                         ])
