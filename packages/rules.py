@@ -521,10 +521,10 @@ class AnnotationRule(Rule):
                 for transactional_method_type in transactional_method_types:
                     if transactional_method_type in line:
                         # 前一行或前兩行至少要有 @Override annotation 否則報錯
-                        if "@Transaction" not in self.page.file_lines[count - 1] and "@Transaction" not in self.page.file_lines[count - 2]:
+                        if "@Transactional" not in self.page.file_lines[count - 1] and "@Transactional" not in self.page.file_lines[count - 2]:
                             self._log_error_line(
                                 count, self.method_should_add_transaction_annotation.__name__, line,
-                                'update insert delete 該要有 @Transaction')
+                                'update insert delete 該要有 @Transactional')
 
 
 class GenericTypeRule(Rule):
