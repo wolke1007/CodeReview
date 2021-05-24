@@ -128,6 +128,10 @@ class CommentRule(Rule):
         - 邏輯註解: 程式邏輯
     - 說明註解留下
     - 邏輯註解移除
+    
+    新增:
+    - 程式中不該有系統 gen 出來的 TODO 註解
+    例: "// TODO Auto-generated method stub"
     """
 
     def __init__(self, page):
@@ -165,6 +169,14 @@ class CommentRule(Rule):
                 self._log_error_line(
                     count, self.code_comment_should_not_exist.__name__, line,
                     '程式的 "邏輯註解" 不該留下，商業邏輯類的 "說明註解" 則留下以利後續程式維護')
+
+    def todo_comment_generated_by_system_should_not_exist(self):
+        for count, line in enumerate(self.page.file_lines, start=0):
+            # 系統 gen 出來的 TODO 字串
+            if "TODO Auto-generated method stub" in line:
+                self._log_error_line(
+                    count, self.code_comment_should_not_exist.__name__, line,
+                    '程式中不該有系統自動產生出來的 TODO 註解')
 
 # # 風格
 
