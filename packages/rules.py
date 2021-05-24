@@ -612,7 +612,7 @@ class MethodNameRule(Rule):
         for count, line in enumerate(self.page.file_lines, start=1):
             if "NativeQueryDao" in line or "NativeQueryDao2" in line:
                 break
-            if "implements" in line or "extends" in line:
+            if "implements" in line or "extends" in line or "interface" in line:
                 continue
             if "public" in line:
                 using_properly_name = False
