@@ -106,7 +106,7 @@ def get_function_number(function_name: str) -> str:
     因為有讀取 CSV 所以有效率問題，不建議頻繁使用
     '''
     df = pd.read_csv(CSV_FILE_PATH)
-    pattern = (df["Function Name"] == function_name.lower())
+    pattern = (df["Function Name"] == function_name)
     try:
         function_number = str(int(df[pattern]["Function Number"].values[0]))
     except IndexError:

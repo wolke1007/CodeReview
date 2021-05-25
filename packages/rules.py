@@ -250,7 +250,7 @@ class UnderLineRule(Rule):
             find_guess_name = self._guess_name_with_underline_(
                 line, controller_name)
             # 不一樣代表有找到
-            if controller_name != find_guess_name:
+            if find_guess_name:
                 message = "controller 的命名應為: " + \
                     find_guess_name[0].upper() + find_guess_name[1:] + \
                     " 目前叫做: " + controller_name
@@ -284,26 +284,25 @@ class UnderLineRule(Rule):
                 request_name = match.group()[1:]
                 for line in self.page.sql_file_lines:
                     if request_name in line:
-                        return True  # 用原來的名字就找到了
+                        return  # 用原來的名字就找到了
+                    # 如果名字原來就已經有底線就不用猜測了
                     if "_" in request_name:
-                        continue
-                        # 如果原來就已經有底線就不用猜測了，如果找完整個檔案都沒有就是沒有
+                        continue                  
                     find_guess_name = self._guess_name_with_underline_(
                         line, request_name)
                     # 不一樣代表有找到
-                    if request_name != find_guess_name:
+                    if find_guess_name:
                         self._log_error_message(
                             function_name=self.requestmapping_name_should_same_as_do_query_naming.__name__,
                             message="request 的命名應為: " + find_guess_name + " 目前叫做: " + request_name,
                             recommend='若 do action 的 query 原來有底線則 RequestMapping 也需要有底線')
-                        return False
+                        return
         message = "request 的命名: " + request_name + \
             " 於 update sql 中不存在，請確認 commit 是否有更新此檔案"
         self._log_error_message(
             function_name=self.requestmapping_name_should_same_as_do_query_naming.__name__,
             message=message,
             recommend=message)
-        return False
 
     def jsp_directory_name_should_same_as_do_query_naming(self):
         '''
@@ -385,7 +384,6 @@ class UnderLineRule(Rule):
         '''
         在所有位置加上底線試試看，如果有則回報答案
         '''
-        name = name[0].lower() + name[1:]
         for index in range(len(name), 0, -1):
             tmp_list = list(name)
             tmp_list.insert(index, "_")
@@ -395,7 +393,7 @@ class UnderLineRule(Rule):
             match = re.search(pattern, line, re.IGNORECASE)
             if match is not None:
                 return controller_name_with_underline
-        return name
+        return None
 
 
 class LegacyDirectoryPathRule(Rule):
