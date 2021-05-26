@@ -1,5 +1,5 @@
 import os, sys
-from packages.utils import get_function_number, get_jsp_file_paths, log_message; 
+from packages.utils import get_function_number, get_jsp_file_paths, get_request_name, log_message; 
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from rules import *
 from utils import *
@@ -91,7 +91,7 @@ class ServiceImplPage(Page):
 class JspPage(Page):
     def __init__(self, file_path: str, controller_name: str):
         super().__init__(file_path=file_path, controller_name=controller_name)
-        self.function_number = get_function_number(function_name=controller_name[:-10])
+        self.function_number = get_function_number(function_name=get_request_name(controller_name))
         if not self.function_number:
             log_message("=== JspPage ===\n"
                         "------------------------------------------------------\n"

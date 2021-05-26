@@ -116,6 +116,16 @@ def get_function_number(function_name: str) -> str:
     return function_number
 
 
+def get_request_name(controller_name: str) -> str:
+    controller_file_path = get_controller_file_path(controller_name)
+    with open(controller_file_path, 'r') as file:
+        lines = file.readlines()
+    for line in lines:
+        if "@RequestMapping(" in line:
+            match = re.search(r'/\w*', line)  # match.group() => /m2213
+            return match.group()[1:] if match else None
+    return None
+
 def get_jsp_file_paths(controller_name: str) -> list:
     result = []
     jsp_directory_path = get_jsp_diretory_path()
