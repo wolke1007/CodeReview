@@ -9,3 +9,6 @@ jsp_directory_path : /src/main/webapp/WEB-INF/jsp/
 js_directory_path : /src/main/resources/static/js/
 csv_file_path : ./function_number.csv
 log_path : ./log.txt
+ignore_file_path_list : 
+  - NativeQueryDao.java
+  - FuturesDao.java

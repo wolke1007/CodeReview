@@ -18,6 +18,8 @@ JSP_DIRETORY_PATH = config.get('jsp_directory_path')
 JS_DIRETORY_PATH = config.get('js_directory_path')
 CSV_FILE_PATH = config.get('csv_file_path')
 LOG_PATH = config.get('log_path')
+ignore_files = config.get('ignore_file_path_list')
+
 
 def get_service_names(controller_file_path: str) -> list:
     with open(controller_file_path, 'r') as file:
@@ -33,6 +35,8 @@ def get_service_names(controller_file_path: str) -> list:
 def get_service_file_paths(service_names: list) -> list:
     paths = []
     for service_name in service_names:
+        if ignore_files and (service_name + ".java") in ignore_files:
+            continue
         paths.append("{root}{service_dir_path}/{service_name}.{file_extension}".format(
             root=PROJECT_ROOT_PATH,
             service_dir_path=SERVICE_DIRECTORY_PATH,
@@ -44,6 +48,8 @@ def get_service_file_paths(service_names: list) -> list:
 def get_serviceimpl_file_paths(service_names: list) -> list:
     paths = []
     for service_name in service_names:
+        if ignore_files and (service_name + "Impl" + ".java") in ignore_files:
+            continue
         paths.append("{root}{serviceimpl_dir_path}/{serviceimpl_name}.{file_extension}".format(
             root=PROJECT_ROOT_PATH,
             serviceimpl_dir_path=SERVICEIMPL_DIRECTORY_PATH,
@@ -94,6 +100,8 @@ def get_dao_names(serviceimpl_file_paths: list) -> list:
 def get_dao_file_paths(dao_names: list) -> list:
     dao_file_paths = []
     for dao_name in dao_names:
+        if ignore_files and (dao_name + ".java") in ignore_files:
+            continue
         dao_path = "{root}{dao_dir}/{dao_name}.{file_ext}".format(
             root=PROJECT_ROOT_PATH, dao_dir=DAO_DIRETORY_PATH, dao_name=dao_name, file_ext="java")
         dao_file_paths.append(dao_path)
@@ -126,19 +134,22 @@ def get_request_name(controller_name: str) -> str:
             return match.group()[1:] if match else None
     return None
 
+
 def get_jsp_file_paths(controller_name: str) -> list:
     result = []
     jsp_directory_path = get_jsp_diretory_path()
-    jsp_file_directory_full_path = jsp_directory_path + controller_name[:-10].lower()
+    jsp_file_directory_full_path = jsp_directory_path + \
+        controller_name[:-10].lower()
     for _, _, jsp_file_names in os.walk(jsp_file_directory_full_path):
-        jsp_file_full_paths = [ jsp_file_directory_full_path+'/'+file_name for file_name in jsp_file_names]
+        jsp_file_full_paths = [jsp_file_directory_full_path +
+                               '/'+file_name for file_name in jsp_file_names]
         result += jsp_file_full_paths
     return result
 
 
 def get_log_path():
     return LOG_PATH
-        
+
 
 def log_message(message: str):
     log_message = "{message}".format(message=message)
@@ -151,6 +162,8 @@ if __name__ == "__main__":
                                                   "/Users/cloud.chen/code/taifex-fdms-cms/src/main/java/com/mitake/infra/repository/app/service/b.java"]
     assert get_service_names("abc.java") == ["S1304Service"]
     assert get_function_number("a01sz05") == "010200"
-    assert get_jsp_file_paths("A01sz05Controller") == ['report.jsp', 'index.jsp']
+    assert get_jsp_file_paths("A01sz05Controller") == ['/Users/cloud.chen/code/taifex-fdms-cms/src/main/webapp/WEB-INF/jsp/a01sz05/report.jsp', '/Users/cloud.chen/code/taifex-fdms-cms/src/main/webapp/WEB-INF/jsp/a01sz05/index.jsp']
     assert get_log_path() == "./log.txt"
     log_message("1234")
+    print("ignore_files")
+    print(ignore_files) 
