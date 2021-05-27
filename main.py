@@ -28,7 +28,7 @@ def main(file_path):
     # 檢查 JSP
     jsp_file_paths = util.get_jsp_file_paths(controller_name)
     if not jsp_file_paths:
-        util.log_message("=== JSP FILE NOT FOUND IN PATH : {}/===".format(util.get_jsp_diretory_path() + controller_name[:-10].lower()))
+        util.log_message("=== JSP FILE NOT FOUND IN PATH : {}/ ===".format(util.get_jsp_diretory_path() + controller_name[:-10].lower()))
     for jsp_file_path in jsp_file_paths:
         page.JspPage(file_path=jsp_file_path, controller_name=controller_name).check_all_rules()
 
