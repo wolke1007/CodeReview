@@ -19,6 +19,7 @@ JS_DIRETORY_PATH = config.get('js_directory_path')
 CSV_FILE_PATH = config.get('csv_file_path')
 LOG_PATH = config.get('log_path')
 ignore_files = config.get('ignore_file_path_list')
+independent_file_rules = config.get('independent_file_rules')
 
 
 def get_service_names(controller_file_path: str) -> list:
@@ -156,6 +157,9 @@ def log_message(message: str):
     with open(get_log_path(), 'a') as file:
         file.writelines([log_message])
 
+
+def get_independent_file_rules() -> list:
+    return independent_file_rules
 
 if __name__ == "__main__":
     assert get_service_file_paths(["a", "b"]) == ["/Users/cloud.chen/code/taifex-fdms-cms/src/main/java/com/mitake/infra/repository/app/service/a.java",

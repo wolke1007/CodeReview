@@ -1,11 +1,10 @@
 from packages import pages as page
 from packages import utils as util
-import sys, getopt
+from packages import rules as rule
+import sys, getopt, re, os
 
 
 def main(file_path):
-    with open(util.get_log_path(), 'w') as f:
-        f.writelines([])
     controller_name = input("input controller file path: ") if not file_path else file_path
     controller_name = controller_name[:-5] if ".java" in controller_name else controller_name
     controller_file_path = util.get_controller_file_path(controller_name)
@@ -32,10 +31,56 @@ def main(file_path):
     for jsp_file_path in jsp_file_paths:
         page.JspPage(file_path=jsp_file_path, controller_name=controller_name).check_all_rules()
 
+def do_check_with_independent_file_rules(file_path: str):
+    p = page.CustomizePage(file_path)
+    rules = util.get_independent_file_rules()
+    print(rules)
+    for rule_dict in rules:
+        for rule_name in rule_dict:
+            r = getattr(sys.modules[rule.__name__], rule_name)(p)
+            for rule_detail in rule_dict.get(rule_name):
+                print("set rule:  " + rule_detail)
+                p.set_rule(r.set_assert_rule(rule_detail))
+    print("do check all rules.")
+    p.check_all_rules()
 
 if __name__ == "__main__":
     if len(sys.argv) == 2:
-        main(file_path=sys.argv[1])
+        with open(util.get_log_path(), 'w') as f:
+            f.writelines([])
+        if "-h" == sys.argv[1] or "--help" == sys.argv[1]:
+            print("usage:\tmain.py\t[-h] [--help] [<controller name>] [<controller file name>] \n"
+                "\t\t[--show_rules] [--show] [-s]\n"
+                "\n"
+                "Commands:\n"
+                "  -h  --help  顯示此訊息\n"
+                "  <controller name>\n"
+                "  <controller file name>  開始檢查該 controller 相關檔案 例如：M300401Controller  or  M300401Controller.java\n"
+                "  --show_rules\n"
+                "  --show\n"
+                "  -s  會顯示出所有 Rule 大項目名稱以及細項名稱\n"
+                )
+            exit()
+        if "--show_rules" == sys.argv[1] or "--show" == sys.argv[1] or "-s" == sys.argv[1]:
+            rules = rule.get_all_rules()
+            rules_dict = {}
+            for r in rules:
+                method_names = [method_name for method_name in dir(r)
+                        if callable(getattr(r, method_name)) and "__" not in method_name and method_name[0] != "_" and "rule" not in method_name]
+                rules_dict[r.__name__] = method_names
+            for r in rules_dict:
+                print("  - " + r + " :")
+                for method_name in rules_dict.get(r):
+                    print("    - " + method_name)
+            exit()
+        if re.search(r"\w*/\w*", sys.argv[1]):
+            if sys.argv[1].startswith("src", 0, 3):
+                file_path = os.path.join(util.PROJECT_ROOT_PATH, sys.argv[1])
+            else:
+                file_path = sys.argv[1]
+            do_check_with_independent_file_rules(file_path)
+        else:
+            main(file_path=sys.argv[1])
     elif len(sys.argv) == 1:
         print("no arg") # debug
         main(None)

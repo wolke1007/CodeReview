@@ -667,6 +667,13 @@ class JspRule(Rule):
             recommend='此 jsp 的 title 未使用 message.properties 的對應變數')
 
 
+def get_all_rules():
+    #TODO 改成取整個檔案裡面的所有 class 並判別名字有 "Rule" 在內的
+    rules = [JavaDocRule, CommentRule, IfElseRule, UnderLineRule,
+        LegacyDirectoryPathRule, RequestMethodRule, AnnotationRule,
+        GenericTypeRule, MethodNameRule, JspRule]
+    return rules
+
 if __name__ == "__main__":
     class TestPage():
         """

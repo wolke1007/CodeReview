@@ -30,6 +30,40 @@ class Page():
             rule.do_rule_check()
 
 
+class CustomizePage():
+    def __init__(self, file_path: str):
+        self.type = type(self).__name__
+        self.file_path = file_path
+        # print(self.type)  # debug
+        with open(self.file_path, 'r') as f:
+            self.file_lines = f.readlines()
+        self.rules = []
+
+    def set_rules(self, rules: list):
+        '''
+        如果要執行全部的 Rule
+        例: set_rules([JavaDocRule(self).set_all_rules_to_check()]
+
+        如果只要執行部分 Rule
+        例: set_rules([JavaDocRule(self).set_assert_rule("rule_name")]
+        '''
+        self.rules = rules
+
+    def set_rule(self, rule):
+        '''
+        如果要執行全部的 Rule
+        例: set_rules([JavaDocRule(self).set_all_rules_to_check()]
+
+        如果只要執行部分 Rule
+        例: set_rule(JavaDocRule(self).set_assert_rule("rule_name"))
+        '''
+        self.rules.append(rule)
+
+    def check_all_rules(self):
+        for rule in self.rules:
+            rule.do_rule_check()
+
+
 class ServicePage(Page):
     def __init__(self, file_path: str, controller_name: str):
         super().__init__(file_path=file_path, controller_name=controller_name)

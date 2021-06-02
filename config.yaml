@@ -12,3 +12,16 @@ log_path : ./log.txt
 ignore_file_path_list : 
   - NativeQueryDao.java
   - FuturesDao.java
+  - Fi41Dao.java 
+independent_file_rules :
+  - CommentRule :
+    - code_comment_should_not_exist
+    - todo_comment_generated_by_system_should_not_exist
+  - AnnotationRule :
+    - method_should_add_transaction_annotation
+  - GenericTypeRule :
+    - should_not_using_generic_type
+  - MethodNameRule :
+    - method_name_defination_initial_should_not_be_capital
+    - method_name_initial_should_not_be_capital
+    - method_should_using_restricted_name
