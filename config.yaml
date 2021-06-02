@@ -25,3 +25,5 @@ independent_file_rules :
     - method_name_defination_initial_should_not_be_capital
     - method_name_initial_should_not_be_capital
     - method_should_using_restricted_name
+  - LegacyDirectoryPathRule :
+    - legacy_file_name_and_path_should_be_same_as_old_project

@@ -605,6 +605,8 @@ class MethodNameRule(Rule):
         '''
         檢查每個方法使用限制的動詞當做名稱 "update", "insert", "delete", "find", "get", "query", "select", "truncate"
         '''
+        #FIXME 若有 class 級別的變數則會判斷出錯，例: public String mes = "";
+        #FIXME 若有建構子則判斷會出錯，例: public FeeXivOfficeModel() {
         restrict_method_types = ["update", "insert",
                                  "delete", "find", "get", "query", "select", "truncate"]
         for count, line in enumerate(self.page.file_lines, start=1):

@@ -40,7 +40,8 @@ def do_check_with_independent_file_rules(file_path: str):
             r = getattr(sys.modules[rule.__name__], rule_name)(p)
             for rule_detail in rule_dict.get(rule_name):
                 print("set rule:  " + rule_detail)
-                p.set_rule(r.set_assert_rule(rule_detail))
+                r.set_assert_rule(rule_detail)
+            p.set_rule(r)
     print("do check all rules.")
     p.check_all_rules()
 
