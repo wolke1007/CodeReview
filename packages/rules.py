@@ -558,16 +558,18 @@ class MethodNameRule(Rule):
         搜尋所有 xxx.xxx 的 pattern 並把 . 後面的部分當作 method name 做檢查
         '''
         for count, line in enumerate(self.page.file_lines, start=0):
+            if "package " in line or "import " in line or "//" in line:
+                continue
             # 這兩個檔案不做驗證，因為裡面有 SQL 語法存在
             if "NativeQueryDao" in line or "NativeQueryDao2" in line:
                 break
             if "RequestMethod.GET" in line or "RequestMethod.POST" in line:
                 continue
-            if "package " in line or "import " in line:
-                continue
-            method_name = re.search(r'\w\.\w*', line)
+            method_name = re.search(r'\w\.\w+', line)
             # 若整個是大寫，有可能是 BigDecimal.ZERO 的 ZERO 這種情境
             method_name_all_isupper = True
+            if method_name is not None and is_chinese_text_exist(method_name.group()):
+                continue
             if method_name is not None:
                 for char in method_name.group()[2:]:
                     if char.islower():

@@ -120,6 +120,8 @@ def get_function_number(function_name: str) -> str:
         function_number = str(int(df[pattern]["Function Number"].values[0]))
     except IndexError:
         return None
+    except ValueError:
+        return None  # cannot convert float NaN to integer
     if len(function_number) < 6:
         return "0"+function_number
     return function_number
@@ -160,6 +162,13 @@ def log_message(message: str):
 
 def get_independent_file_rules() -> list:
     return independent_file_rules
+
+def is_chinese_text_exist(text: str) -> bool:
+    for ch in text:
+        if u'\u4e00' <= ch <= u'\u9fff':
+            return True
+    return False
+
 
 if __name__ == "__main__":
     assert get_service_file_paths(["a", "b"]) == ["/Users/cloud.chen/code/taifex-fdms-cms/src/main/java/com/mitake/infra/repository/app/service/a.java",
