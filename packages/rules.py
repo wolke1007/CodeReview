@@ -1,8 +1,8 @@
-from utils import *
 import re
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+from utils import *
 
 
 class Rule():
@@ -263,7 +263,7 @@ class UnderLineRule(Rule):
             " 於 update sql 中不存在，請確認 commit 是否有更新此檔案"
         self._log_error_message(
             function_name=self.controller_name_should_same_as_do_query_naming.__name__,
-            message=message,
+            message="",
             recommend=message)
         return False
 
@@ -301,7 +301,7 @@ class UnderLineRule(Rule):
             " 於 update sql 中不存在，請確認 commit 是否有更新此檔案"
         self._log_error_message(
             function_name=self.requestmapping_name_should_same_as_do_query_naming.__name__,
-            message=message,
+            message="",
             recommend=message)
 
     def jsp_directory_name_should_same_as_do_query_naming(self):
@@ -312,23 +312,15 @@ class UnderLineRule(Rule):
             do action: a01sr08_33
             jsp folder path: /Users/cloud.chen/code/taifex-fdms-cms/src/main/webapp/WEB-INF/jsp/a01sr08_33
         '''
-        controller_name = self.page.controller_name[:-10]
-        jsp_dir_name = controller_name
-
-        # 先看 controller name 有沒有在 sql file 中
-        for line in self.page.sql_file_lines:
-            pattern = '\/' + controller_name + '\/'
-            # sql 裡面有可能是大寫或小寫開頭，故要 ignorecase
-            match = re.search(pattern, line, re.IGNORECASE)
-            if match is not None:
-                jsp_dir_name = match.group()[1:-1]
-                break
+        controller_name = self.page.controller_name
+        if get_request_name(controller_name):
+            jsp_dir_name = get_request_name(controller_name)
         else:
-            message = "在 sql file 裡找不到 controller name: {}".format(
+            message = "{} 在對應 Controller 找不到 request name".format(
                 controller_name)
             self._log_error_message(
                 function_name=self.jsp_directory_name_should_same_as_do_query_naming.__name__,
-                message=message,
+                message="",
                 recommend=message)
             return
         full_jsp_diretory_path = get_jsp_diretory_path() + jsp_dir_name
@@ -350,23 +342,15 @@ class UnderLineRule(Rule):
             do action: a01sr08_33
             js folder path: /Users/cloud.chen/code/taifex-fdms-cms/src/main/resources/static/js/a01sr08_33
         '''
-        controller_name = self.page.controller_name[:-10]
-        js_dir_name = controller_name
-
-        # 先看 controller name 有沒有在 sql file 中
-        for line in self.page.sql_file_lines:
-            pattern = '\/' + controller_name + '\/'
-            # sql 裡面有可能是大寫或小寫開頭，故要 ignorecase
-            match = re.search(pattern, line, re.IGNORECASE)
-            if match is not None:
-                js_dir_name = match.group()[1:-1]
-                break
+        controller_name = self.page.controller_name
+        if get_request_name(controller_name):
+            js_dir_name = get_request_name(controller_name)
         else:
-            message = "在 sql file 裡找不到 controller name: {}".format(
+            message = "{} 在對應 Controller 找不到 request name".format(
                 controller_name)
             self._log_error_message(
                 function_name=self.js_directory_name_should_same_as_do_query_naming.__name__,
-                message=message,
+                message="",
                 recommend=message)
             return
         full_js_diretory_path = get_js_diretory_path() + js_dir_name
@@ -633,7 +617,8 @@ class MethodNameRule(Rule):
 
 class JspRule(Rule):
     """
-    此部分不在 doc 中
+    此部分不在 doc 中但是是用來檢查
+    1. jsp 的 title 功能號碼需對應 csv 中的功能號碼
     """
 
     def __init__(self, page):
@@ -671,11 +656,59 @@ class JspRule(Rule):
             recommend='此 jsp 的 title 未使用 message.properties 的對應變數')
 
 
+class OrmRule(Rule):
+    """
+    此部分不在 doc 中但是是用來檢查
+    1. 檢查 extends BaseDao 這邊有沒有正確帶入 entity type
+    例: public class ControlListDao extends BaseDao<ControlList, Long>
+    2. 有沒有 autowired repository
+    例: @Autowired
+	    ControlListRepository controlListRepository;
+    3. entity 擺放的位置是否正確
+    例: com.mitake.infra.repository.app.entity
+    4. repository 命名與擺放位置是否正確
+    例: 
+        命名應為: ControlListRepository
+        位置: com.mitake.infra.repository.app.dao
+    """
+
+
+class SqlRule(Rule):
+    """
+    檢查 update sql
+    1. request name 應該要出現在 update sql 中
+    """
+
+    def __init__(self, page):
+        super().__init__(page)
+
+    def request_name_should_in_update_sql(self):
+        '''
+        request name 應該要出現在 update sql 中
+        例: 
+            UPDATE SMS.dbo.MENULINK SET NEW_LINK = '/a01sd01/index', USE_NEW_LINK = 'Y' WHERE Link = 'a01sd01.do?method=query';
+        '''
+        controller_name = self.page.controller_name[:-10]
+        for line in self.page.sql_file_lines:
+            pattern = '\/' + controller_name + '\/'
+            # sql 裡面有可能是大寫或小寫開頭，但 controller 一定是大寫開頭，故要 ignorecase
+            match = re.search(pattern, line, re.IGNORECASE)
+            if match is not None:
+                break
+        else:
+            message = "在 sql file 裡找不到 controller name: {}".format(
+                controller_name)
+            self._log_error_message(
+                function_name=self.js_directory_name_should_same_as_do_query_naming.__name__,
+                message=message,
+                recommend=message)
+
+
 def get_all_rules():
     #TODO 改成取整個檔案裡面的所有 class 並判別名字有 "Rule" 在內的
     rules = [JavaDocRule, CommentRule, IfElseRule, UnderLineRule,
         LegacyDirectoryPathRule, RequestMethodRule, AnnotationRule,
-        GenericTypeRule, MethodNameRule, JspRule]
+        GenericTypeRule, MethodNameRule, JspRule, OrmRule, SqlRule]
     return rules
 
 if __name__ == "__main__":
@@ -713,4 +746,5 @@ if __name__ == "__main__":
     MethodNameRule(page).set_all_rules_to_check().do_rule_check()
     CommentRule(page).set_all_rules_to_check().do_rule_check()
     JspRule(page).set_all_rules_to_check().do_rule_check()
+    SqlRule(page).set_all_rules_to_check().do_rule_check()
     # JavaDocRule(page).do_rule_check()  # 這個要獨立測試

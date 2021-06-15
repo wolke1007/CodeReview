@@ -60,6 +60,10 @@ def get_serviceimpl_file_paths(service_names: list) -> list:
 
 
 def get_controller_file_path(controller_name: str) -> str:
+    '''
+    controller_name 需帶入 XXXController
+    例: M3025Controller
+    '''
     return "{root}{controller_dir_path}/{controller_name}.{file_extension}".format(
         root=PROJECT_ROOT_PATH,
         controller_dir_path=CONTROLLER_DIRECTORY_PATH,
@@ -128,6 +132,10 @@ def get_function_number(function_name: str) -> str:
 
 
 def get_request_name(controller_name: str) -> str:
+    '''
+    controller_name 需帶入 XXXController
+    例: M3025Controller
+    '''
     controller_file_path = get_controller_file_path(controller_name)
     with open(controller_file_path, 'r') as file:
         lines = file.readlines()
