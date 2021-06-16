@@ -113,6 +113,9 @@ def get_dao_file_paths(dao_names: list) -> list:
     return dao_file_paths
 
 
+def get_dao_file_root_path() -> str:
+    return PROJECT_ROOT_PATH + DAO_DIRETORY_PATH
+
 def get_function_number(function_name: str) -> str:
     '''
     回傳 010200 這種格式的 function number

@@ -1,8 +1,9 @@
 import re
-import os
 import sys
+import os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 from utils import *
+import inspect
 
 
 class Rule():
@@ -48,7 +49,8 @@ class Rule():
             file.writelines(self.error_logs)
 
     def _log_error_line(self, count: int, function_name: str, line: str, recommend: str, file="None"):
-        file_path = file if file != "None" else self.page.file_path.split("/")[-1]
+        file_path = file if file != "None" else self.page.file_path.split(
+            "/")[-1]
         self.error_logs.append(
             self.log_template.format(
                 file=file_path,
@@ -59,7 +61,8 @@ class Rule():
             ))
 
     def _log_error_message(self, function_name: str, message: str, recommend: str, line="None", file="None"):
-        file_path = file if file != "None" else self.page.file_path.split("/")[-1]
+        file_path = file if file != "None" else self.page.file_path.split(
+            "/")[-1]
         self.error_logs.append(
             self.log_template.format(
                 file=file_path,
@@ -128,7 +131,7 @@ class CommentRule(Rule):
         - 邏輯註解: 程式邏輯
     - 說明註解留下
     - 邏輯註解移除
-    
+
     新增:
     - 程式中不該有系統 gen 出來的 TODO 註解
     例: "// TODO Auto-generated method stub"
@@ -287,7 +290,7 @@ class UnderLineRule(Rule):
                         return  # 用原來的名字就找到了
                     # 如果名字原來就已經有底線就不用猜測了
                     if "_" in request_name:
-                        continue                  
+                        continue
                     find_guess_name = self._guess_name_with_underline_(
                         line, request_name)
                     # 不一樣代表有找到
@@ -559,7 +562,7 @@ class MethodNameRule(Rule):
                     if char.islower():
                         method_name_all_isupper = False
                         break
-            if method_name is not None and method_name.group()[2].isupper() and not method_name_all_isupper :
+            if method_name is not None and method_name.group()[2].isupper() and not method_name_all_isupper:
                 self._log_error_line(
                     count, self.method_name_initial_should_not_be_capital.__name__, line,
                     recommend='方法名稱不要大寫開頭')
@@ -586,13 +589,13 @@ class MethodNameRule(Rule):
                 self._log_error_line(
                     count, self.method_name_defination_initial_should_not_be_capital.__name__, line,
                     recommend='方法名稱不要大寫開頭')
-    
+
     def method_should_using_restricted_name(self):
         '''
         檢查每個方法使用限制的動詞當做名稱 "update", "insert", "delete", "find", "get", "query", "select", "truncate"
         '''
-        #FIXME 若有 class 級別的變數則會判斷出錯，例: public String mes = "";
-        #FIXME 若有建構子則判斷會出錯，例: public FeeXivOfficeModel() {
+        # FIXME 若有 class 級別的變數則會判斷出錯，例: public String mes = "";
+        # FIXME 若有建構子則判斷會出錯，例: public FeeXivOfficeModel() {
         restrict_method_types = ["update", "insert",
                                  "delete", "find", "get", "query", "select", "truncate"]
         for count, line in enumerate(self.page.file_lines, start=1):
@@ -611,7 +614,7 @@ class MethodNameRule(Rule):
                         function_name=self.method_should_using_restricted_name.__name__,
                         line=count,
                         message=('\ndao 方法的命名應使用: "find", "get", "query", "select" "update", "insert", "delete", "truncate"\n'
-                                    '目前叫做: '+ line),
+                                 '目前叫做: ' + line),
                         recommend='dao 方法的命名應使用: "find", "get", "query", "select" "update", "insert", "delete", "truncate"')
 
 
@@ -631,7 +634,8 @@ class JspRule(Rule):
             <li><s:message code="page.02-02-01" /></li>
         '''
         for count, line in enumerate(self.page.file_lines, start=0):
-            match_jsp_code_line = re.search('<s\:message\s*code\s*=\s*\"\w*', line)
+            match_jsp_code_line = re.search(
+                '<s\:message\s*code\s*=\s*\"\w*', line)
             if match_jsp_code_line:
                 match = re.search(r'\d*-\d*-\d*', line)
                 if not match:
@@ -660,17 +664,141 @@ class OrmRule(Rule):
     """
     此部分不在 doc 中但是是用來檢查
     1. 檢查 extends BaseDao 這邊有沒有正確帶入 entity type
-    例: public class ControlListDao extends BaseDao<ControlList, Long>
-    2. 有沒有 autowired repository
-    例: @Autowired
-	    ControlListRepository controlListRepository;
+        例: public class ControlListDao extends BaseDao<ControlList, Long>
+    2. 需正確 autowired repository
+        例: @Autowired
+            ControlListRepository controlListRepository;
     3. entity 擺放的位置是否正確
-    例: com.mitake.infra.repository.app.entity
+        例: com.mitake.infra.repository.app.entity
     4. repository 命名與擺放位置是否正確
-    例: 
-        命名應為: ControlListRepository
-        位置: com.mitake.infra.repository.app.dao
+        例: 
+            命名應為: ControlListRepository
+            位置: com.mitake.infra.repository.app.dao
     """
+
+    def __init__(self, page):
+        super().__init__(page)
+
+    def basedao_should_use_right_entity(self):
+        '''
+        檢查 extends BaseDao 這邊有沒有正確帶入 entity type
+            例: public class ControlListDao extends BaseDao<ControlList, Long>
+        '''
+        for count, line in enumerate(self.page.file_lines, start=0):
+            if "extends BaseDao<" not in line:
+                continue
+            pattern = 'class\s\w*Dao'
+            match_dao_name = re.search(pattern, line)
+            if match_dao_name:
+                dao_name = match_dao_name.group()[6:-3]  # AbcDao => 只取 Abc
+                pattern2 = '\<{}\s*,'.format(dao_name)
+                entity_name_match = re.search(pattern2, line)
+                if entity_name_match:
+                    entity_name = entity_name_match.group()[1:-1].strip()
+                    if entity_name != dao_name:
+                        self._log_error_line(
+                            count, _get_function_name_(), line,
+                            file=self.page.file_path,
+                            recommend='BaseDao 沒有帶入正確的 entity, 預期為: '+dao_name[0].upper()+dao_name[1:])
+                    else:
+                        return
+            else:
+                self._log_error_line(
+                    count, _get_function_name_(), line,
+                    file=self.page.file_path,
+                    recommend='此檔案不是以 XxxDao 做命名')
+
+    def entity_path_should_be_correct(self):
+        '''
+        entity 擺放的位置是否正確
+        '''
+        dao_name = None
+        entity_name = None
+        import_lines = []
+        for count, line in enumerate(self.page.file_lines, start=0):
+            if not dao_name:
+                pattern = 'class\s\w*Dao'
+                line_include_class = line
+                match_dao_name = re.search(pattern, line)
+                if match_dao_name:
+                    dao_name = match_dao_name.group()[6:-3]  # AbcDao => 只取 Abc
+                    break
+            if 'import' in line:
+                import_lines.append(line)
+        for line in import_lines:
+            pattern2 = 'com\.mitake\.infra\.repository\.app\.entity\.{};'.format(dao_name)
+            entity_path_match = re.search(pattern2, line)
+            if entity_path_match:
+                entity_name = entity_path_match.group().split('.')[-1][:-1]
+        if not dao_name:
+            self._log_error_line(
+                count, _get_function_name_(), line=line_include_class,
+                file=self.page.file_path,
+                recommend='此檔案不是以 XxxDao 做命名')
+            return
+        if dao_name != entity_name:
+            self._log_error_line(
+                count, _get_function_name_(), line=line_include_class,
+                file=self.page.file_path,
+                recommend='entity 的名稱與此 dao 名稱不符')
+            return
+        if not entity_name:
+            self._log_error_line(
+                count, _get_function_name_(), "",
+                file=self.page.file_path,
+                recommend='entity 路徑應為 com.mitake.infra.repository.app.entity，請檢查 entity 擺放的位置是否正確')
+            return
+
+    def dao_should_autowired_repository(self):
+        '''
+        需正確 autowired repository
+            例: @Autowired
+                ControlListRepository controlListRepository;
+        '''
+        dao_name = None
+        for count, line in enumerate(self.page.file_lines, start=0):
+            if not dao_name:
+                match_dao_name = re.search('class\s\w*Dao', line)
+                if match_dao_name:
+                    dao_name = match_dao_name.group().split(' ')[1]
+            if "Repository" not in line:
+                continue
+            pattern = '\w*Repository\s*\w*Repository'
+            repository_name_match = re.search(pattern, line)
+            if repository_name_match:
+                repository_name = repository_name_match.group().split(" ")[0]
+                # [Abc]Repository != [Abc]Dao
+                if repository_name[:-10] != dao_name[:-3]:
+                    self._log_error_line(
+                        count, _get_function_name_(), line,
+                        file=self.page.file_path,
+                        recommend='此 Dao autowired 的 Repository 名稱不正確，目前是 {} 應該要 {}'.format(repository_name[:-10], dao_name[:-3][0].upper() + dao_name[:-3][1:] + 'Repository'))
+                    return
+                else:
+                    return
+        self._log_error_line(
+            count, _get_function_name_(), line,
+            file=self.page.file_path,
+            recommend='此 Dao 應該要 Autowired {}'.format(dao_name[:-3][0].upper() + dao_name[:-3][1:] + 'Repository 但檔案中沒找到'))
+
+    def repository_path_should_be_correct(self):
+        '''
+        repository 命名與擺放位置是否正確
+        '''
+        dao_name = None
+        for count, line in enumerate(self.page.file_lines, start=0):
+            if not dao_name:
+                pattern = 'class\s\w*Dao'
+                match_dao_name = re.search(pattern, line)
+                if match_dao_name:
+                    dao_name = match_dao_name.group()[6:-3]  # AbcDao => 只取 Abc
+                    break
+        if not os.path.isfile('{}/{}Repository.java'.format(get_dao_file_root_path(), dao_name)):
+            self._log_error_line(
+                count, _get_function_name_(), "",
+                file=self.page.file_path,
+                recommend='Repository 檔案不存在，或存放路徑錯誤，應為 com.mitake.infra.repository.app.dao.' + dao_name + 'Repository')
+            return
 
 
 class SqlRule(Rule):
@@ -699,17 +827,22 @@ class SqlRule(Rule):
             message = "在 sql file 裡找不到 controller name: {}".format(
                 controller_name)
             self._log_error_message(
-                function_name=self.js_directory_name_should_same_as_do_query_naming.__name__,
+                function_name=self.request_name_should_in_update_sql.__name__,
                 message=message,
                 recommend=message)
 
 
+def _get_function_name_():
+    return inspect.stack()[1][3]
+
+
 def get_all_rules():
-    #TODO 改成取整個檔案裡面的所有 class 並判別名字有 "Rule" 在內的
+    # TODO 改成取整個檔案裡面的所有 class 並判別名字有 "Rule" 在內的
     rules = [JavaDocRule, CommentRule, IfElseRule, UnderLineRule,
-        LegacyDirectoryPathRule, RequestMethodRule, AnnotationRule,
-        GenericTypeRule, MethodNameRule, JspRule, OrmRule, SqlRule]
+             LegacyDirectoryPathRule, RequestMethodRule, AnnotationRule,
+             GenericTypeRule, MethodNameRule, JspRule, OrmRule, SqlRule]
     return rules
+
 
 if __name__ == "__main__":
     class TestPage():
@@ -735,7 +868,32 @@ if __name__ == "__main__":
         def check_all_rules(self):
             for rule in self.rules:
                 rule.do_rule_check()
+
+    class DaoTestPage():
+        """
+        mocking data
+        """
+
+        def __init__(self):
+            self.type = type(self).__name__
+            self.file_path = "dao_test.java"
+            self.controller_name = "A01sr0833Controller"
+            # print(self.type)  # debug
+            with open(self.file_path, 'r') as f:  # 測試時永遠以 dao_test.java 當作對象
+                self.file_lines = f.readlines()
+            self.rules = []
+            self.sql_file_path = get_sql_file_path()
+            with open(self.sql_file_path, 'r') as f:
+                self.sql_file_lines = f.readlines()
+
+        def set_rules(self, rules: list):
+            self.rules = rules
+
+        def check_all_rules(self):
+            for rule in self.rules:
+                rule.do_rule_check()
     page = TestPage()
+    dao_page = DaoTestPage()
     with open("log.txt", 'w') as f:
         f.writelines([])
     LegacyDirectoryPathRule(page).set_all_rules_to_check().do_rule_check()
@@ -747,4 +905,5 @@ if __name__ == "__main__":
     CommentRule(page).set_all_rules_to_check().do_rule_check()
     JspRule(page).set_all_rules_to_check().do_rule_check()
     SqlRule(page).set_all_rules_to_check().do_rule_check()
+    OrmRule(dao_page).set_all_rules_to_check().do_rule_check()
     # JavaDocRule(page).do_rule_check()  # 這個要獨立測試

@@ -1,8 +1,8 @@
-import os, sys
-from packages.utils import get_function_number, get_jsp_file_paths, get_request_name, log_message; 
+import sys
+import os
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-from rules import *
 from utils import *
+from rules import *
 
 
 class Page():
@@ -98,12 +98,19 @@ class ControllerPage(Page):
 class DaoPage(Page):
     def __init__(self, file_path: str, controller_name: str):
         super().__init__(file_path=file_path, controller_name=controller_name)
-        self.set_rules([JavaDocRule(self).set_all_rules_to_check(),
-                        CommentRule(self).set_all_rules_to_check(),
-                        IfElseRule(self).set_all_rules_to_check(),
-                        GenericTypeRule(self).set_all_rules_to_check(),
-                        MethodNameRule(self).set_all_rules_to_check()
-                        ])
+        is_orm = False
+        for line in self.file_lines:
+            if 'extends BaseDao<' in line:
+                is_orm = True
+        rules = [JavaDocRule(self).set_all_rules_to_check(),
+                 CommentRule(self).set_all_rules_to_check(),
+                 IfElseRule(self).set_all_rules_to_check(),
+                 GenericTypeRule(self).set_all_rules_to_check(),
+                 MethodNameRule(self).set_all_rules_to_check()
+                 ]
+        if is_orm:
+            rules.append(OrmRule(self).set_all_rules_to_check())
+        self.set_rules(rules)
         self.sql_file_path = get_sql_file_path()
         with open(self.sql_file_path, 'r') as f:
             self.sql_file_lines = f.readlines()
@@ -125,12 +132,13 @@ class ServiceImplPage(Page):
 class JspPage(Page):
     def __init__(self, file_path: str, controller_name: str):
         super().__init__(file_path=file_path, controller_name=controller_name)
-        self.function_number = get_function_number(function_name=get_request_name(controller_name))
+        self.function_number = get_function_number(
+            function_name=get_request_name(controller_name))
         if not self.function_number:
             log_message("=== JspPage ===\n"
                         "------------------------------------------------------\n"
                         "function number not found in csv, skip this file\n"
-                        +file_path+"\n"
+                        + file_path+"\n"
                         "------------------------------------------------------\n")
             return
         self.set_rules([JspRule(self).set_all_rules_to_check()])
