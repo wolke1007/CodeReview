@@ -30,6 +30,8 @@ def main(file_path):
         util.log_message("=== JSP FILE NOT FOUND IN PATH : {}/ ===".format(util.get_jsp_diretory_path() + controller_name[:-10].lower()))
     for jsp_file_path in jsp_file_paths:
         page.JspPage(file_path=jsp_file_path, controller_name=controller_name).check_all_rules()
+    collect_all_single_if_else_error_log_lines()
+
 
 def do_check_with_independent_file_rules(file_path: str):
     p = page.CustomizePage(file_path)
@@ -44,6 +46,17 @@ def do_check_with_independent_file_rules(file_path: str):
             p.set_rule(r)
     print("do check all rules.")
     p.check_all_rules()
+
+def collect_all_single_if_else_error_log_lines():
+    log_with_lines = ['不要有單行if, for statment  \n請檢查下述之行數並更正，謝謝  \n']
+    with open('log.txt', 'r') as file:
+        lines = file.readlines()
+    for count, line in enumerate(lines, start=0):
+        if "if_statement_should_with_bracket_mark" in line:
+            log_with_lines.append(lines[count + 1])
+    with open('log.txt', 'a') as file:
+        file.writelines(log_with_lines)
+
 
 if __name__ == "__main__":
     if len(sys.argv) == 2:

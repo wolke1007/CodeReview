@@ -18,7 +18,7 @@ class Rule():
         self.log_path = get_log_path()
         self.log_template = ("------------------------------------------------------\n"
                              "violate rule: \"{rule}\"\n"
-                             "line: {line} \n"
+                             "line: {line}  \n"
                              "file: {file} \n"
                              "code: >>>{code}\n"
                              "recommend: {recommend}\n"
