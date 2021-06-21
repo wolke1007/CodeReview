@@ -316,8 +316,8 @@ class UnderLineRule(Rule):
             jsp folder path: /Users/cloud.chen/code/taifex-fdms-cms/src/main/webapp/WEB-INF/jsp/a01sr08_33
         '''
         controller_name = self.page.controller_name
-        if get_request_name(controller_name):
-            jsp_dir_name = get_request_name(controller_name)
+        if get_request_name(get_controller_file_path(controller_name)):
+            jsp_dir_name = get_request_name(get_controller_file_path(controller_name))
         else:
             message = "{} 在對應 Controller 找不到 request name".format(
                 controller_name)
@@ -346,8 +346,8 @@ class UnderLineRule(Rule):
             js folder path: /Users/cloud.chen/code/taifex-fdms-cms/src/main/resources/static/js/a01sr08_33
         '''
         controller_name = self.page.controller_name
-        if get_request_name(controller_name):
-            js_dir_name = get_request_name(controller_name)
+        if get_request_name(get_controller_file_path(controller_name)):
+            js_dir_name = get_request_name(get_controller_file_path(controller_name))
         else:
             message = "{} 在對應 Controller 找不到 request name".format(
                 controller_name)

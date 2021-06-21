@@ -22,6 +22,9 @@ ignore_files = config.get('ignore_file_path_list')
 independent_file_rules = config.get('independent_file_rules')
 
 
+def get_project_root_path() -> str:
+    return PROJECT_ROOT_PATH
+
 def get_service_names(controller_file_path: str) -> list:
     with open(controller_file_path, 'r') as file:
         lines = file.readlines()
@@ -134,12 +137,9 @@ def get_function_number(function_name: str) -> str:
     return function_number
 
 
-def get_request_name(controller_name: str) -> str:
-    '''
-    controller_name 需帶入 XXXController
-    例: M3025Controller
-    '''
-    controller_file_path = get_controller_file_path(controller_name)
+def get_request_name(controller_file_path: str) -> str:
+    if not controller_file_path or not os.path.isfile(controller_file_path):
+        return None
     with open(controller_file_path, 'r') as file:
         lines = file.readlines()
     for line in lines:
@@ -152,8 +152,7 @@ def get_request_name(controller_name: str) -> str:
 def get_jsp_file_paths(controller_name: str) -> list:
     result = []
     jsp_directory_path = get_jsp_diretory_path()
-    jsp_file_directory_full_path = jsp_directory_path + \
-        controller_name[:-10].lower()
+    jsp_file_directory_full_path = jsp_directory_path + get_request_name(get_controller_file_path(controller_name))
     for _, _, jsp_file_names in os.walk(jsp_file_directory_full_path):
         jsp_file_full_paths = [jsp_file_directory_full_path +
                                '/'+file_name for file_name in jsp_file_names]
@@ -182,6 +181,7 @@ def is_chinese_text_exist(text: str) -> bool:
 
 
 if __name__ == "__main__":
+    assert get_project_root_path() == "/Users/cloud.chen/code/taifex-fdms-cms"
     assert get_service_file_paths(["a", "b"]) == ["/Users/cloud.chen/code/taifex-fdms-cms/src/main/java/com/mitake/infra/repository/app/service/a.java",
                                                   "/Users/cloud.chen/code/taifex-fdms-cms/src/main/java/com/mitake/infra/repository/app/service/b.java"]
     assert get_service_names("abc.java") == ["S1304Service"]
@@ -189,5 +189,4 @@ if __name__ == "__main__":
     assert get_jsp_file_paths("A01sz05Controller") == ['/Users/cloud.chen/code/taifex-fdms-cms/src/main/webapp/WEB-INF/jsp/a01sz05/report.jsp', '/Users/cloud.chen/code/taifex-fdms-cms/src/main/webapp/WEB-INF/jsp/a01sz05/index.jsp']
     assert get_log_path() == "./log.txt"
     log_message("1234")
-    print("ignore_files")
-    print(ignore_files) 
+

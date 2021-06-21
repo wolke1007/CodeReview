@@ -65,7 +65,7 @@ class CustomizePage():
 
 
 class ServicePage(Page):
-    def __init__(self, file_path: str, controller_name: str):
+    def __init__(self, file_path: str, controller_name = None):
         super().__init__(file_path=file_path, controller_name=controller_name)
         self.set_rules([JavaDocRule(self).set_all_rules_to_check(),
                         CommentRule(self).set_all_rules_to_check(),
@@ -88,7 +88,8 @@ class ControllerPage(Page):
                         GenericTypeRule(self).set_all_rules_to_check(),
                         MethodNameRule(self).set_assert_rule(
                             "method_name_initial_should_not_be_capital").set_assert_rule(
-                            "method_name_defination_initial_should_not_be_capital")
+                            "method_name_defination_initial_should_not_be_capital"),
+                        SqlRule(self).set_all_rules_to_check()
                         ])
         self.sql_file_path = get_sql_file_path()
         with open(self.sql_file_path, 'r') as f:
@@ -96,7 +97,7 @@ class ControllerPage(Page):
 
 
 class DaoPage(Page):
-    def __init__(self, file_path: str, controller_name: str):
+    def __init__(self, file_path: str, controller_name = None):
         super().__init__(file_path=file_path, controller_name=controller_name)
         is_orm = False
         for line in self.file_lines:
@@ -117,7 +118,7 @@ class DaoPage(Page):
 
 
 class ServiceImplPage(Page):
-    def __init__(self, file_path: str, controller_name: str):
+    def __init__(self, file_path: str, controller_name = None):
         super().__init__(file_path=file_path, controller_name=controller_name)
         self.set_rules([CommentRule(self).set_all_rules_to_check(),
                         LegacyDirectoryPathRule(self).set_all_rules_to_check(),
@@ -130,10 +131,10 @@ class ServiceImplPage(Page):
 
 
 class JspPage(Page):
-    def __init__(self, file_path: str, controller_name: str):
+    def __init__(self, file_path: str, controller_name = None):
         super().__init__(file_path=file_path, controller_name=controller_name)
         self.function_number = get_function_number(
-            function_name=get_request_name(controller_name))
+            function_name=get_request_name(util.get_controller_file_path(controller_name)))
         if not self.function_number:
             log_message("=== JspPage ===\n"
                         "------------------------------------------------------\n"
