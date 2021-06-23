@@ -134,7 +134,7 @@ class JspPage(Page):
     def __init__(self, file_path: str, controller_name = None):
         super().__init__(file_path=file_path, controller_name=controller_name)
         self.function_number = get_function_number(
-            function_name=get_request_name(util.get_controller_file_path(controller_name)))
+            function_name=get_request_name(get_controller_file_path(controller_name)))
         if not self.function_number:
             log_message("=== JspPage ===\n"
                         "------------------------------------------------------\n"
