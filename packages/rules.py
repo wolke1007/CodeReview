@@ -413,7 +413,7 @@ class LegacyDirectoryPathRule(Rule):
                 if not os.path.isfile(old_file_path):
                     self._log_error_line(
                         count, self.legacy_file_name_and_path_should_be_same_as_old_project.__name__, line,
-                        '檢查 import 中的 package 路徑，若為 legacy 檢查是否使用與舊專案一樣的路徑')
+                        '若為 legacy 檢查是否使用與舊專案一樣的路徑，並以 src 開頭如 `...legacy/src/...`')
 
 # # 程式碼
 
@@ -592,12 +592,12 @@ class MethodNameRule(Rule):
 
     def method_should_using_restricted_name(self):
         '''
-        檢查每個方法使用限制的動詞當做名稱 "update", "insert", "delete", "find", "get", "query", "select", "truncate"
+        檢查每個方法使用限制的動詞當做名稱 "update", "insert", "delete", "find", "get", "query", "select", "truncate", "count"
         '''
         # FIXME 若有 class 級別的變數則會判斷出錯，例: public String mes = "";
         # FIXME 若有建構子則判斷會出錯，例: public FeeXivOfficeModel() {
         restrict_method_types = ["update", "insert",
-                                 "delete", "find", "get", "query", "select", "truncate"]
+                                 "delete", "find", "get", "query", "select", "truncate", "count"]
         for count, line in enumerate(self.page.file_lines, start=1):
             if "NativeQueryDao" in line or "NativeQueryDao2" in line:
                 break
@@ -613,9 +613,9 @@ class MethodNameRule(Rule):
                     self._log_error_message(
                         function_name=self.method_should_using_restricted_name.__name__,
                         line=count,
-                        message=('\ndao 方法的命名應使用: "find", "get", "query", "select" "update", "insert", "delete", "truncate"\n'
+                        message=('\ndao 方法的命名應使用: "find", "get", "query", "select" "update", "insert", "delete", "truncate", "count"\n'
                                  '目前叫做: ' + line),
-                        recommend='dao 方法的命名應使用: "find", "get", "query", "select" "update", "insert", "delete", "truncate"')
+                        recommend='dao 方法的命名應使用: "find", "get", "query", "select" "update", "insert", "delete", "truncate", "count"')
 
 
 class JspRule(Rule):
