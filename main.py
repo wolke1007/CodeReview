@@ -67,7 +67,7 @@ def get_file_paths_by_legacy_controller_path(legacy_controller_path: str) -> dic
     return paths
 
 
-def controller_file_pathcontroller_check(paths: dict, controller_name=None):
+def controller_check(paths: dict, controller_name=None):
     page.ControllerPage(file_path=paths.get("controller_file_path"),
                         controller_name=controller_name).check_all_rules()
                         
