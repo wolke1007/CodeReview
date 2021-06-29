@@ -635,7 +635,7 @@ class JspRule(Rule):
         '''
         for count, line in enumerate(self.page.file_lines, start=0):
             match_jsp_code_line = re.search(
-                '<s\:message\s*code\s*=\s*\"\w*', line)
+                '<s\:message\s*code\s*=\s*\"page\w*', line)
             if match_jsp_code_line:
                 match = re.search(r'\d*-\d*-\d*', line)
                 if not match:
