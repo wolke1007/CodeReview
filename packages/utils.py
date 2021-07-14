@@ -24,10 +24,11 @@ independent_file_rules = config.get('independent_file_rules')
 
 
 def get_project_root_path() -> str:
-    return PROJECT_ROOT_PATH
+    return PROJECT_ROOT_PATH 
 
-def get_service_names(controller_file_path: str) -> list:
-    with open(controller_file_path, 'r') as file:
+
+def get_service_names(file_path: str) -> list:
+    with open(file_path, 'r') as file:
         lines = file.readlines()
     service_names = []
     check_service_name = False
@@ -39,8 +40,8 @@ def get_service_names(controller_file_path: str) -> list:
             check_service_name = False
             match_word = re.search(r"\w*\s\w*;", line)
             if match_word:
-                service_names.append(match_word.group().split(';')[0].split(' ')[0])  # 找到的可能會是 ContactForCbcM mgr;//comment word
-    print(service_names)
+                service_names.append(match_word.group().split(';')[0].split(
+                    ' ')[0])  # 找到的可能會是 ContactForCbcM mgr;//comment word
     return service_names
 
 
@@ -52,11 +53,18 @@ def get_service_file_paths(service_names: list) -> list:
         command = 'find {root}{service_dir_path} -name {file_name}.java'.format(
             root=PROJECT_ROOT_PATH,
             service_dir_path=SERVICE_DIRECTORY_PATH,
-            file_name = service_name)
-        p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            file_name=service_name)
+        p = subprocess.Popen(command, shell=True,
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         path = str(p.stdout.readline())[2:-3]
         if path:
             paths.append(path)
+    for path in paths:
+        service_names = get_service_names(path)
+        if service_names:
+            inner_file_paths = get_service_file_paths(service_names)
+            paths += inner_file_paths
+    paths = list(set(paths))
     return paths
 
 
@@ -131,6 +139,7 @@ def get_dao_file_paths(dao_names: list) -> list:
 def get_dao_file_root_path() -> str:
     return PROJECT_ROOT_PATH + DAO_DIRETORY_PATH
 
+
 def get_function_number(function_name: str) -> str:
     '''
     回傳 010200 這種格式的 function number
@@ -164,7 +173,8 @@ def get_request_name(controller_file_path: str) -> str:
 def get_jsp_file_paths(controller_name: str) -> list:
     result = []
     jsp_directory_path = get_jsp_diretory_path()
-    jsp_file_directory_full_path = jsp_directory_path + get_request_name(get_controller_file_path(controller_name))
+    jsp_file_directory_full_path = jsp_directory_path + \
+        get_request_name(get_controller_file_path(controller_name))
     for _, _, jsp_file_names in os.walk(jsp_file_directory_full_path):
         jsp_file_full_paths = [jsp_file_directory_full_path +
                                '/'+file_name for file_name in jsp_file_names]
@@ -185,6 +195,7 @@ def log_message(message: str):
 def get_independent_file_rules() -> list:
     return independent_file_rules
 
+
 def is_chinese_text_exist(text: str) -> bool:
     for ch in text:
         if u'\u4e00' <= ch <= u'\u9fff':
@@ -198,7 +209,7 @@ if __name__ == "__main__":
                                                   "/Users/cloud.chen/code/taifex-fdms-cms/src/main/java/com/mitake/infra/repository/app/service/b.java"]
     assert get_service_names("abc.java") == ["S1304Service"]
     assert get_function_number("a01sz05") == "010200"
-    assert get_jsp_file_paths("A01sz05Controller") == ['/Users/cloud.chen/code/taifex-fdms-cms/src/main/webapp/WEB-INF/jsp/a01sz05/report.jsp', '/Users/cloud.chen/code/taifex-fdms-cms/src/main/webapp/WEB-INF/jsp/a01sz05/index.jsp']
+    assert get_jsp_file_paths("A01sz05Controller") == ['/Users/cloud.chen/code/taifex-fdms-cms/src/main/webapp/WEB-INF/jsp/a01sz05/report.jsp',
+                                                       '/Users/cloud.chen/code/taifex-fdms-cms/src/main/webapp/WEB-INF/jsp/a01sz05/index.jsp']
     assert get_log_path() == "./log.txt"
     log_message("1234")
-
