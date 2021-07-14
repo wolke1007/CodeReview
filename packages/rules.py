@@ -111,6 +111,8 @@ class JavaDocRule(Rule):
                         "Map<String, Object>",
                         "String"]
         for count, line in enumerate(self.page.file_lines, start=0):
+            if "public class " in line:
+                return
             for return_type in return_types:
                 pattern = return_type + r'\s\w*\('
                 match = re.search(pattern, line)
