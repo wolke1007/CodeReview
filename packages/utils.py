@@ -2,6 +2,7 @@ import yaml
 import re
 import os
 import pandas as pd
+import subprocess
 
 
 with open('config.yaml', 'r', encoding='utf-8') as stream:
@@ -29,10 +30,17 @@ def get_service_names(controller_file_path: str) -> list:
     with open(controller_file_path, 'r') as file:
         lines = file.readlines()
     service_names = []
+    check_service_name = False
     for line in lines:
-        match_word = re.search(r"\.S\d*Service", line)
-        if match_word:
-            service_names.append(match_word.group()[1:])  # 找到的會是 .S0101Service
+        if "@Autowired" in line:
+            check_service_name = True
+            continue
+        if check_service_name:
+            check_service_name = False
+            match_word = re.search(r"\w*\s\w*;", line)
+            if match_word:
+                service_names.append(match_word.group().split(';')[0].split(' ')[0])  # 找到的可能會是 ContactForCbcM mgr;//comment word
+    print(service_names)
     return service_names
 
 
@@ -41,11 +49,14 @@ def get_service_file_paths(service_names: list) -> list:
     for service_name in service_names:
         if ignore_files and (service_name + ".java") in ignore_files:
             continue
-        paths.append("{root}{service_dir_path}/{service_name}.{file_extension}".format(
+        command = 'find {root}{service_dir_path} -name {file_name}.java'.format(
             root=PROJECT_ROOT_PATH,
             service_dir_path=SERVICE_DIRECTORY_PATH,
-            service_name=service_name,
-            file_extension="java"))
+            file_name = service_name)
+        p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        path = str(p.stdout.readline())[2:-3]
+        if path:
+            paths.append(path)
     return paths
 
 
@@ -54,6 +65,7 @@ def get_serviceimpl_file_paths(service_names: list) -> list:
     for service_name in service_names:
         if ignore_files and (service_name + "Impl" + ".java") in ignore_files:
             continue
+        # TODO 這邊要多個判斷，沒取到要改用找的
         paths.append("{root}{serviceimpl_dir_path}/{serviceimpl_name}.{file_extension}".format(
             root=PROJECT_ROOT_PATH,
             serviceimpl_dir_path=SERVICEIMPL_DIRECTORY_PATH,

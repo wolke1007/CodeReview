@@ -14,34 +14,53 @@ def main(file_path):
                                       5] if ".java" in controller_name else controller_name
     paths = get_file_paths_by_controller_name(controller_name)
     # 檢查 Controller
-    controller_check(paths, controller_name)
+    pass_if_exception_occur(controller_check, paths, controller_name)
     # 檢查 Service
-    service_check(paths, controller_name)
+    pass_if_exception_occur(service_check, paths, controller_name)
     # 檢查 ServiceImpl
-    service_impl_check(paths, controller_name)
+    pass_if_exception_occur(service_impl_check, paths, controller_name)
     # 檢查 Dao
-    dao_check(paths, controller_name)
-    # 檢查 JSP
-    jsp_file_paths = util.get_jsp_file_paths(controller_name)
-    if not jsp_file_paths:
-        util.log_message("=== JSP FILE NOT FOUND IN PATH : {}/ ===".format(util.get_jsp_diretory_path() +
-                         util.get_request_name(util.get_controller_file_path(controller_name))))
-    for jsp_file_path in jsp_file_paths:
-        page.JspPage(file_path=jsp_file_path,
-                     controller_name=controller_name).check_all_rules()
-    collect_all_single_if_else_error_log_lines()
+    pass_if_exception_occur(dao_check, paths, controller_name)
+    try:
+        # 檢查 JSP
+        jsp_file_paths = util.get_jsp_file_paths(controller_name)
+        if not jsp_file_paths:
+            util.log_message("=== JSP FILE NOT FOUND IN PATH : {}/ ===".format(util.get_jsp_diretory_path() +
+                                                                               util.get_request_name(util.get_controller_file_path(controller_name))))
+        for jsp_file_path in jsp_file_paths:
+            page.JspPage(file_path=jsp_file_path,
+                         controller_name=controller_name).check_all_rules()
+        collect_all_single_if_else_error_log_lines()
+    except:
+        pass
+
+
+def pass_if_exception_occur(function, *args):
+    try:
+        if len(args) == 1:
+            return function(args[0])
+        if len(args) == 2:
+            return function(args[0], args[1])
+    except:
+        return None
 
 
 def get_file_paths_by_controller_name(controller_name: str) -> dict:
     '''
     return controller_file_path, service_file_paths, serviceimpl_file_paths, dao_file_paths
     '''
-    controller_file_path = util.get_controller_file_path(controller_name)
-    service_names = util.get_service_names(controller_file_path)
-    service_file_paths = util.get_service_file_paths(service_names)
-    serviceimpl_file_paths = util.get_serviceimpl_file_paths(service_names)
-    dao_names = util.get_dao_names(serviceimpl_file_paths)
-    dao_file_paths = util.get_dao_file_paths(dao_names)
+    controller_file_path = pass_if_exception_occur(
+        util.get_controller_file_path, controller_name)
+    service_names = pass_if_exception_occur(
+        util.get_service_names, controller_file_path)
+    service_file_paths = pass_if_exception_occur(
+        util.get_service_file_paths, service_names)
+    serviceimpl_file_paths = pass_if_exception_occur(
+        util.get_serviceimpl_file_paths, service_names)
+    dao_names = pass_if_exception_occur(
+        util.get_dao_names, serviceimpl_file_paths)
+    dao_file_paths = pass_if_exception_occur(
+        util.get_dao_file_paths, dao_names)
     paths = {"controller_file_path": controller_file_path,
              "service_file_paths": service_file_paths,
              "serviceimpl_file_paths": serviceimpl_file_paths,
@@ -70,7 +89,7 @@ def get_file_paths_by_legacy_controller_path(legacy_controller_path: str) -> dic
 def controller_check(paths: dict, controller_name=None):
     page.ControllerPage(file_path=paths.get("controller_file_path"),
                         controller_name=controller_name).check_all_rules()
-                        
+
 
 def service_check(paths: dict, controller_name=None):
     for service_file_path in paths.get("service_file_paths"):
@@ -114,6 +133,26 @@ def collect_all_single_if_else_error_log_lines():
             log_with_lines.append(lines[count + 1])
     with open('log.txt', 'a') as file:
         file.writelines(log_with_lines)
+
+
+def get_page_type(file_path: str):
+    '''
+    ControllerPage
+    ServicePage
+    DaoPage
+    ServiceImplPage
+    '''
+    with open(util.get_log_path(), 'r') as file:
+        lines = file.readlines()
+    for line in lines:
+        if "@RequestMapping" in line:
+            return "ControllerPage"
+        if "public interface" in line:
+            return "ServicePage"
+        if "@Repository" in line or "extends BaseDao" in line:
+            return "DaoPage"
+        if "public class " in line and "implements" in line:
+            return "ServiceImplPage"
 
 
 if __name__ == "__main__":
@@ -166,15 +205,18 @@ if __name__ == "__main__":
             exit()
         project_root_path = util.get_project_root_path()
         if re.search("/\w*Controller\.java", sys.argv[1]):
-            controller_name = re.search("/\w*Controller\.java", sys.argv[1]).group()[1:-5]
-            if re.search("controller/legacy", sys.argv[1]): # 若為 legacy controller 的情境
+            controller_name = re.search(
+                "/\w*Controller\.java", sys.argv[1]).group()[1:-5]
+            # 若為 legacy controller 的情境
+            if re.search("controller/legacy", sys.argv[1]):
                 paths = get_file_paths_by_legacy_controller_path(sys.argv[1])
             else:
                 paths = get_file_paths_by_controller_name(controller_name)
         else:
             controller_name = None
             # TODO 這邊要解決若是非 controller 頁面時如何取得 paths 的問題
-        page_obj = page_meta.get("obj")(project_root_path + "/" + sys.argv[1], controller_name)
+        page_obj = page_meta.get("obj")(
+            project_root_path + "/" + sys.argv[1], controller_name)
         page_obj.check_all_rules()
         for check_func in page_meta.get("next"):
             check_func(paths)
