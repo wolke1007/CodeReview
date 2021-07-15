@@ -41,7 +41,9 @@ def pass_if_exception_occur(function, *args):
             return function(args[0])
         if len(args) == 2:
             return function(args[0], args[1])
-    except:
+    except Exception as e:
+        print(function.__name__ + " occur exception")
+        print(e)
         return None
 
 
