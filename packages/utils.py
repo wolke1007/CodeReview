@@ -73,12 +73,14 @@ def get_serviceimpl_file_paths(service_names: list) -> list:
     for service_name in service_names:
         if ignore_files and (service_name + "Impl" + ".java") in ignore_files:
             continue
-        # TODO 這邊要多個判斷，沒取到要改用找的
-        paths.append("{root}{serviceimpl_dir_path}/{serviceimpl_name}.{file_extension}".format(
+        command = 'find {root}{service_dir_path} -name {file_name}.java'.format(
             root=PROJECT_ROOT_PATH,
-            serviceimpl_dir_path=SERVICEIMPL_DIRECTORY_PATH,
-            serviceimpl_name=service_name + "Impl",
-            file_extension="java"))
+            service_dir_path=SERVICE_DIRECTORY_PATH,
+            file_name=service_name + "Impl")
+        p = subprocess.Popen(command, shell=True,
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        path = str(p.stdout.readline())[2:-3]
+        paths.append(path)
     return paths
 
 
