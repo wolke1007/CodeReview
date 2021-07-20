@@ -555,6 +555,12 @@ class MethodNameRule(Rule):
             if "RequestMethod.GET" in line or "RequestMethod.POST" in line:
                 continue
             method_name = re.search(r'\w\.\w+', line)
+            # FIXME 如果 sql command 中含有 xxx.xxx 則會一起被判斷到
+            # 如 "select sum(marginDailybal.InitialMarginTwd)" 這樣
+
+            # FIXME 如果是 access class 的 static constant property 時會被判斷到因為是大寫開頭
+            # 如 Round.Length or Round.LENGTH 都會被判斷到
+             
             # 若整個是大寫，有可能是 BigDecimal.ZERO 的 ZERO 這種情境
             method_name_all_isupper = True
             if method_name is not None and is_chinese_text_exist(method_name.group()):
@@ -601,9 +607,12 @@ class MethodNameRule(Rule):
         restrict_method_types = ["update", "insert",
                                  "delete", "find", "get", "query", "select", "truncate", "count"]
         for count, line in enumerate(self.page.file_lines, start=1):
+            # TODO 這兩個檔案太長出錯先 pass，未來再回頭整理
             if "NativeQueryDao" in line or "NativeQueryDao2" in line:
                 break
-            if "implements" in line or "extends" in line or "interface" in line:
+            # legacy dao 是 public class 開頭
+            # 普通 dao 會 extends BaseDao
+            if "public class" in line or "extends BaseDao" in line or "interface" in line :
                 continue
             if "public" in line:
                 using_properly_name = False
@@ -796,6 +805,7 @@ class OrmRule(Rule):
                     dao_name = match_dao_name.group()[6:-3]  # AbcDao => 只取 Abc
                     break
         if not os.path.isfile('{}/{}Repository.java'.format(get_dao_file_root_path(), dao_name)):
+            print('{}/{}Repository.java'.format(get_dao_file_root_path(), dao_name))
             self._log_error_line(
                 count, _get_function_name_(), "",
                 file=self.page.file_path,

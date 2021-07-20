@@ -81,14 +81,10 @@ class ControllerPage(Page):
     def __init__(self, file_path: str, controller_name: str):
         super().__init__(file_path=file_path, controller_name=controller_name)
         self.set_rules([CommentRule(self).set_all_rules_to_check(),
-                        IfElseRule(self).set_all_rules_to_check(),
                         UnderLineRule(self).set_all_rules_to_check(),
                         LegacyDirectoryPathRule(self).set_all_rules_to_check(),
                         RequestMethodRule(self).set_all_rules_to_check(),
                         GenericTypeRule(self).set_all_rules_to_check(),
-                        MethodNameRule(self).set_assert_rule(
-                            "method_name_initial_should_not_be_capital").set_assert_rule(
-                            "method_name_defination_initial_should_not_be_capital"),
                         SqlRule(self).set_all_rules_to_check()
                         ])
         self.sql_file_path = get_sql_file_path()

@@ -10,6 +10,7 @@ with open('config.yaml', 'r', encoding='utf-8') as stream:
 
 PROJECT_ROOT_PATH = config.get('project_root_path')
 OLD_PROJECT_ROOT_PATH = config.get('old_project_root_path')
+REPOSITORY_DIRECTORY_PATH = config.get('repository_path')
 SERVICE_DIRECTORY_PATH = config.get('service_directory_path')
 SERVICEIMPL_DIRECTORY_PATH = config.get('serviceimpl_directory_path')
 CONTROLLER_DIRECTORY_PATH = config.get('controller_directory_path')
@@ -33,6 +34,8 @@ def get_service_names(file_path: str) -> list:
     service_names = []
     check_service_name = False
     for line in lines:
+        if not line:
+            pass
         if "@Autowired" in line:
             check_service_name = True
             continue
@@ -59,6 +62,8 @@ def get_service_file_paths(service_names: list) -> list:
         path = str(p.stdout.readline())[2:-3]
         if path:
             paths.append(path)
+        else:
+            print("service file " + service_name + ".java not found")
     for path in paths:
         service_names = get_service_names(path)
         if service_names:
@@ -80,7 +85,10 @@ def get_serviceimpl_file_paths(service_names: list) -> list:
         p = subprocess.Popen(command, shell=True,
                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         path = str(p.stdout.readline())[2:-3]
-        paths.append(path)
+        if path:
+            paths.append(path)
+        else:
+            print("serviceImpl file " + service_name + "Impl.java not found")
     return paths
 
 
@@ -119,11 +127,19 @@ def get_dao_names(serviceimpl_file_paths: list) -> list:
     for serviceimpl_file_path in serviceimpl_file_paths:
         with open(serviceimpl_file_path, 'r') as file:
             lines = file.readlines()
+        check_dao_name = False
         for line in lines:
-            match_word = re.search(r"\s\w*Dao\s", line)
-            if match_word:
-                # 找到的會是 " A01arDao "
-                dao_names.append(match_word.group()[1:-1])
+            if not line:
+                pass
+            if "@Autowired" in line:
+                check_dao_name = True
+                continue
+            if check_dao_name:
+                check_dao_name = False
+                match_word = re.search(r"\w*\s*\w*;", line)
+                if match_word:
+                    dao_names.append(match_word.group().split(';')[0].split(
+                        ' ')[0])  # 找到的可能會是 ContactForCbcM mgr;//comment word
     return dao_names
 
 
@@ -132,9 +148,17 @@ def get_dao_file_paths(dao_names: list) -> list:
     for dao_name in dao_names:
         if ignore_files and (dao_name + ".java") in ignore_files:
             continue
-        dao_path = "{root}{dao_dir}/{dao_name}.{file_ext}".format(
-            root=PROJECT_ROOT_PATH, dao_dir=DAO_DIRETORY_PATH, dao_name=dao_name, file_ext="java")
-        dao_file_paths.append(dao_path)
+        command = 'find {root}{dao_dir} -name {file_name}.java'.format(
+            root=PROJECT_ROOT_PATH,
+            dao_dir=REPOSITORY_DIRECTORY_PATH,
+            file_name=dao_name)
+        p = subprocess.Popen(command, shell=True,
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        path = str(p.stdout.readline())[2:-3]
+        if path:
+            dao_file_paths.append(path)
+        else:
+            print("dao file " + dao_name + ".java not found")
     return dao_file_paths
 
 

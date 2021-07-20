@@ -1,5 +1,6 @@
 project_root_path : /Users/cloud.chen/code/taifex-fdms-cms
 old_project_root_path : /Users/cloud.chen/code/taifex-fdms-old/FMS
+repository_path : /src/main/java/com/mitake/infra/repository
 service_directory_path : /src/main/java/com/mitake/infra/repository/app/service
 serviceimpl_directory_path : /src/main/java/com/mitake/infra/repository/app/service/impl
 controller_directory_path : /src/main/java/com/mitake/controller
@@ -10,7 +11,9 @@ js_directory_path : /src/main/resources/static/js/
 csv_file_path : ./function_number.csv
 log_path : ./log.txt
 ignore_file_path_list : 
+  - FuturesHelper.java
   - NativeQueryDao.java
+  - NativeQueryDao2.java
   - FuturesDao.java
   - Fi41Dao.java 
 independent_file_rules :
